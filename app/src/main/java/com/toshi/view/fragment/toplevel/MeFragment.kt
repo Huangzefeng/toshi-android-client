@@ -47,6 +47,7 @@ import com.toshi.view.activity.NetworkSwitcherActivity
 import com.toshi.view.activity.ScannerActivity
 import com.toshi.view.activity.SignOutActivity
 import com.toshi.view.activity.ViewProfileActivity
+import com.toshi.view.activity.WalletsActivity
 import com.toshi.view.adapter.MeAdapter
 import com.toshi.view.adapter.listeners.OnItemClickListener
 import com.toshi.viewModel.MeViewModel
