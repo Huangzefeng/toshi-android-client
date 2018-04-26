@@ -92,8 +92,6 @@
     <dimen name="chat_corner_radius_large">20dp</dimen>
     <dimen name="chat_corner_radius_small">6dp</dimen>
 
-    <dimen name="checkbox_size">24dp</dimen>
-
     <dimen name="control_corner_radius">32dp</dimen>
 
     <dimen name="dapps_input_z">4dp</dimen>

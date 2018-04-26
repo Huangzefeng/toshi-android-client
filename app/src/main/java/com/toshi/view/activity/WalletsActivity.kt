@@ -63,6 +63,7 @@ class WalletsActivity : AppCompatActivity() {
             adapter = walletAdapter
             val leftPadding = getMultiplePxSize(R.dimen.margin_primary, R.dimen.margin_primary, R.dimen.margin_three_quarters)
             addHorizontalLineDivider(leftPadding = leftPadding)
+            itemAnimator = null
         }
     }
 

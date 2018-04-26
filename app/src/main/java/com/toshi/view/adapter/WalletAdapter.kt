@@ -30,6 +30,9 @@ class WalletAdapter(
 
     private val wallets by lazy { mutableListOf<Wallet>() }
 
+    private var currentSelectedItem = 0
+    private var previousSelectedItem = 0
+
     fun setItems(wallets: List<Wallet>) {
         this.wallets.clear()
         this.wallets.addAll(wallets)
@@ -42,10 +45,21 @@ class WalletAdapter(
 
     override fun onBindViewHolder(holder: WalletViewHolder, position: Int) {
         val wallet = wallets[position]
+        val isSelected = currentSelectedItem == position
         holder.apply {
             setWallet(wallet)
-            setOnItemClickedListener(wallet, onItemClickedListener)
+            if (isSelected) setSelected() else setUnselected()
+            setOnItemClickedListener(wallet, position) { wallet, pos ->
+                handleSelectedItem(wallet, pos)
+            }
         }
+    }
+
+    private fun handleSelectedItem(wallet: Wallet, position: Int) {
+        previousSelectedItem = currentSelectedItem
+        currentSelectedItem = position
+        onItemClickedListener(wallet)
+        notifyItemChanged(previousSelectedItem)
     }
 
     override fun getItemCount(): Int = wallets.size

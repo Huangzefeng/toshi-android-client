@@ -22,6 +22,7 @@ import android.view.View
 import com.toshi.util.ImageUtil
 import com.toshi.viewModel.Wallet
 import kotlinx.android.synthetic.main.list_item__wallet.view.avatar
+import kotlinx.android.synthetic.main.list_item__wallet.view.checkbox
 import kotlinx.android.synthetic.main.list_item__wallet.view.name
 import kotlinx.android.synthetic.main.list_item__wallet.view.paymentAddress
 
@@ -32,7 +33,22 @@ class WalletViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
         ImageUtil.loadIdenticon(wallet.paymentAddress, itemView.avatar)
     }
 
-    fun setOnItemClickedListener(wallet: Wallet, listener: (Wallet) -> Unit) {
-        itemView.setOnClickListener { listener(wallet) }
+    fun setSelected() {
+        itemView.checkbox.isChecked = true
+    }
+
+    fun setUnselected() {
+        itemView.checkbox.isChecked = false
+    }
+
+    fun setOnItemClickedListener(wallet: Wallet, position: Int, listener: (Wallet, Int) -> Unit) {
+        itemView.setOnClickListener {
+            updateSelectedState()
+            listener(wallet, position)
+        }
+    }
+
+    private fun updateSelectedState() {
+        itemView.checkbox.isChecked = !itemView.checkbox.isChecked
     }
 }

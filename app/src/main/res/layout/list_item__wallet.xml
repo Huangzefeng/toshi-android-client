@@ -67,6 +67,7 @@
         android:layout_marginLeft="@dimen/margin_three_quarters"
         android:layout_marginRight="@dimen/margin_three_quarters"
         android:button="@drawable/checkbox"
-        android:layout_gravity="center_vertical"/>
+        android:layout_gravity="center_vertical"
+        android:clickable="false"/>
 
 </LinearLayout>
