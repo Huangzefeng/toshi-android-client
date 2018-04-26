@@ -71,6 +71,14 @@ fun AppCompatActivity.hideStatusBar() = window.setFlags(WindowManager.LayoutPara
 
 fun AppCompatActivity.getPxSize(@DimenRes id: Int) = resources.getDimensionPixelSize(id)
 
+fun AppCompatActivity.getMultiplePxSize(@DimenRes id1: Int, @DimenRes id2: Int): Int {
+    return resources.getDimensionPixelSize(id1) + resources.getDimensionPixelSize(id2)
+}
+
+fun AppCompatActivity.getMultiplePxSize(@DimenRes id1: Int, @DimenRes id2: Int, @DimenRes id3: Int): Int {
+    return resources.getDimensionPixelSize(id1) + resources.getDimensionPixelSize(id2) + resources.getDimensionPixelSize(id3)
+}
+
 fun getAbsoluteY(view: View): Int {
     val coords = IntArray(2)
     view.getLocationInWindow(coords)

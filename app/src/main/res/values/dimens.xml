@@ -35,12 +35,15 @@
     (used many places in the app)
     -->
 
+    <dimen name="avatar_size_extra_small">30dp</dimen>
     <dimen name="avatar_size_small">44dp</dimen>
     <dimen name="avatar_size_medium">72dp</dimen>
 
     <dimen name="border_size_default">1dp</dimen>
 
     <dimen name="button_height_large">40dp</dimen>
+
+    <dimen name="checkbox_size">24dp</dimen>
 
     <dimen name="content_inset_none">0dp</dimen>
 

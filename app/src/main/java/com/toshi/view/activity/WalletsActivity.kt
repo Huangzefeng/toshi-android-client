@@ -19,9 +19,17 @@ package com.toshi.view.activity
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.LinearLayoutManager
 import com.toshi.R
+import com.toshi.extensions.addHorizontalLineDivider
+import com.toshi.extensions.getMultiplePxSize
+import com.toshi.view.adapter.WalletAdapter
+import kotlinx.android.synthetic.main.activity_wallets.closeButton
+import kotlinx.android.synthetic.main.activity_wallets.wallets
 
 class WalletsActivity : AppCompatActivity() {
+
+    private lateinit var walletAdapter: WalletAdapter
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +38,21 @@ class WalletsActivity : AppCompatActivity() {
     }
 
     private fun init() {
+        initClickListeners()
+        initAdapter()
+    }
 
+    private fun initClickListeners() {
+        closeButton.setOnClickListener { finish() }
+    }
+
+    private fun initAdapter() {
+        walletAdapter = WalletAdapter {}
+        wallets.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = walletAdapter
+            val leftPadding = getMultiplePxSize(R.dimen.margin_primary, R.dimen.margin_primary, R.dimen.margin_three_quarters)
+            addHorizontalLineDivider(leftPadding = leftPadding)
+        }
     }
 }

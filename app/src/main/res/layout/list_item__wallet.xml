@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ 	Copyright (c) 2017. Toshi Inc
+  ~
+  ~  This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     (at your option) any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:gravity="center_vertical"
+    android:background="?android:selectableItemBackground">
+
+    <Space
+        android:layout_width="@dimen/margin_primary"
+        android:layout_height="@dimen/space_unused_dimension" />
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/avatar"
+        android:layout_width="@dimen/avatar_size_extra_small"
+        android:layout_height="@dimen/avatar_size_extra_small" />
+
+    <Space
+        android:layout_width="@dimen/margin_three_quarters"
+        android:layout_height="@dimen/space_unused_dimension" />
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        style="@style/NormalEllipsizeEndStyle"
+        android:textColor="@color/textColorPrimary"
+        android:textSize="@dimen/text_size_subtitle"
+        tools:text="Wallet 1"/>
+
+    <com.toshi.view.custom.CollapsingTextView
+        android:id="@+id/paymentAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/textColorSecondary"
+        android:textSize="@dimen/text_size_subtitle"
+        tools:text="Wallet 1"/>
+
+    <Space
+        android:layout_width="12dp"
+        android:layout_height="@dimen/space_unused_dimension" />
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="@dimen/checkbox_size"
+        android:layout_height="@dimen/checkbox_size"
+        android:layout_marginLeft="@dimen/margin_three_quarters"
+        android:layout_marginRight="@dimen/margin_three_quarters"
+        android:button="@drawable/checkbox"
+        android:layout_gravity="center_vertical"/>
+
+</LinearLayout>

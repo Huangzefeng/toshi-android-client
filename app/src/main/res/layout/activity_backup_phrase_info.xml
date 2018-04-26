@@ -97,8 +97,8 @@
 
             <CheckBox
                 android:id="@+id/radio_button_understand"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="@dimen/checkbox_size"
+                android:layout_height="@dimen/checkbox_size"
                 android:layout_marginLeft="@dimen/margin_three_quarters"
                 android:layout_marginRight="@dimen/margin_three_quarters"
                 android:button="@drawable/checkbox"
