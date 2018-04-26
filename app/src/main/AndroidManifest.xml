@@ -114,6 +114,7 @@
         <activity android:name=".view.activity.ChatSearchActivity" />
         <activity android:name=".view.activity.PopularUserSearchActivity" />
         <activity android:name=".view.activity.ViewPopularUsersActivity" />
+        <activity android:name=".view.activity.WalletsActivity" />
 
         <meta-data
             android:name="io.fabric.ApiKey"
