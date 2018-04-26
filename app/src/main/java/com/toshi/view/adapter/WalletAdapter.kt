@@ -22,12 +22,18 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.toshi.R
 import com.toshi.view.adapter.viewholder.WalletViewHolder
+import com.toshi.viewModel.Wallet
 
 class WalletAdapter(
-        private val onItemClickedListener: (String) -> Unit
+        private val onItemClickedListener: (Wallet) -> Unit
 ) : RecyclerView.Adapter<WalletViewHolder>() {
 
-    private val wallets by lazy { emptyList<String>() }
+    private val wallets by lazy { mutableListOf<Wallet>() }
+
+    fun setItems(wallets: List<Wallet>) {
+        this.wallets.clear()
+        this.wallets.addAll(wallets)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WalletViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.list_item__wallet, parent, false)

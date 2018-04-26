@@ -19,14 +19,17 @@ package com.toshi.view.adapter.viewholder
 
 import android.support.v7.widget.RecyclerView
 import android.view.View
+import com.toshi.viewModel.Wallet
+import kotlinx.android.synthetic.main.list_item__wallet.view.name
 import kotlinx.android.synthetic.main.list_item__wallet.view.paymentAddress
 
 class WalletViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
-    fun setWallet(paymentAddress: String) {
-        itemView.paymentAddress.text = paymentAddress
+    fun setWallet(wallet: Wallet) {
+        itemView.name.text = (wallet.name)
+        itemView.paymentAddress.setCollapsedText(wallet.paymentAddress)
     }
 
-    fun setOnItemClickedListener(paymentAddress: String, listener: (String) -> Unit) {
-        itemView.setOnClickListener { listener(paymentAddress) }
+    fun setOnItemClickedListener(wallet: Wallet, listener: (Wallet) -> Unit) {
+        itemView.setOnClickListener { listener(wallet) }
     }
 }
