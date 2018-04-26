@@ -40,6 +40,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.toshi.R;
 import com.toshi.exception.QrCodeException;
+import com.toshi.extensions.Identicon;
 import com.toshi.manager.network.image.CachedGlideUrl;
 import com.toshi.manager.network.image.ForceLoadGlideUrl;
 import com.toshi.model.local.Avatar;
@@ -145,7 +146,20 @@ public class ImageUtil {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         imageView::setImageBitmap,
-                        throwable -> LogUtil.exception(throwable)
+                        LogUtil::exception
+                );
+    }
+
+    public static void loadIdenticon(final String value, final ImageView imageView) {
+        if (value == null || imageView == null) return;
+
+        Single
+                .fromCallable(() -> Identicon.toIdenticon(value))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        imageView::setImageBitmap,
+                        LogUtil::exception
                 );
     }
 
