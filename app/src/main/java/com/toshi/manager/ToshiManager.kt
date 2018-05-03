@@ -93,7 +93,7 @@ class ToshiManager(
         return if (wallet != null && areManagersInitialised) {
             Completable.complete()
         } else walletBuilder
-                .createWallet()
+                .createWalletAndOverrideWalletSeedOnDisk()
                 .doOnSuccess { setWallet(it) }
                 .doOnSuccess { appPrefs.setHasOnboarded(false) }
                 .flatMapCompletable { initManagers(wallet) }
