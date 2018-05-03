@@ -184,7 +184,7 @@ class ToshiManager(
     }
 
     private fun clearWalletAndSignal() {
-        wallet?.clear()
+        walletBuilder.clear()
         signalPrefs.clear()
     }
 

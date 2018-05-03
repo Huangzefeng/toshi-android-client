@@ -210,4 +210,8 @@ class HdWalletBuilder(
             throw IllegalStateException(e)
         }
     }
+
+    fun clear() {
+        walletPrefs.clear()
+    }
 }
