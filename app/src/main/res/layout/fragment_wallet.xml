@@ -102,45 +102,55 @@
                         <LinearLayout
                             android:id="@+id/walletWrapper"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="72dp"
                             android:orientation="horizontal"
                             android:gravity="center_vertical"
-                            android:padding="@dimen/margin_one_and_a_quarter">
+                            android:paddingStart="@dimen/margin_primary"
+                            android:paddingEnd="@dimen/margin_primary">
 
-                            <ImageView
-                                android:layout_width="@dimen/icon_default"
-                                android:layout_height="@dimen/icon_default"
-                                android:layout_gravity="center_vertical"
-                                app:srcCompat="@drawable/ic_qr_code"/>
+                            <de.hdodenhof.circleimageview.CircleImageView
+                                android:id="@+id/avatar"
+                                android:layout_width="@dimen/avatar_size_extra_small"
+                                android:layout_height="@dimen/avatar_size_extra_small" />
 
                             <android.support.v4.widget.Space
-                                android:layout_width="@dimen/margin_primary"
+                                android:layout_width="@dimen/margin_three_quarters"
                                 android:layout_height="@dimen/space_unused_dimension" />
 
-                            <com.toshi.view.custom.CollapsingTextView
-                                android:id="@+id/walletAddress"
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:textColor="@color/textColorPrimary"
-                                android:textSize="@dimen/text_size_subtitle"
-                                tools:text="0x115..45F3a"
-                                style="@style/NormalEllipsizeEndStyle"/>
+                                android:orientation="vertical">
 
-                            <Space
-                                android:layout_width="0dp"
-                                android:layout_height="@dimen/space_unused_dimension"
-                                android:layout_weight="1"/>
+                                <TextView
+                                    android:id="@+id/walletName"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    style="@style/MediumEllipsizeEndStyle"
+                                    android:textSize="16sp"
+                                    android:text="Wallet 1"/>
+
+                                <com.toshi.view.custom.CollapsingTextView
+                                    android:id="@+id/walletAddress"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/textColorPrimary"
+                                    android:textSize="@dimen/text_size_subtitle"
+                                    tools:text="0x115..45F3"
+                                    style="@style/NormalEllipsizeEndStyle"/>
+
+                            </LinearLayout>
+
+                            <android.support.v4.widget.Space
+                                android:layout_width="@dimen/margin_three_quarters"
+                                android:layout_height="@dimen/space_unused_dimension" />
 
                             <Button
-                                android:id="@+id/copy"
+                                android:id="@+id/receive"
                                 android:layout_width="wrap_content"
                                 android:layout_height="32dp"
-                                android:textSize="@dimen/text_size_default"
-                                style="@style/ButtonAllCaps"
-                                android:textColor="@color/textColorPrimary"
-                                android:padding="@dimen/margin_none"
-                                android:text="@string/copy"/>
+                                style="@style/QrCodeButton" />
 
                         </LinearLayout>
                     </android.support.v7.widget.CardView>
