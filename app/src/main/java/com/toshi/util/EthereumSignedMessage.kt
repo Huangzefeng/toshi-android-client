@@ -34,7 +34,7 @@ class EthereumSignedMessage(private val id: String, private val personalMessage:
         return getWallet()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .flatMap { wallet -> Single.fromCallable { wallet.hashAndSignTransactionWithoutMinus27(unsignedValue) } }
+                .flatMap { it.signTransaction(unsignedValue, true) }
                 .map { mapToMethodCall(it) }
                 .subscribeOn(Schedulers.io())
     }
@@ -43,7 +43,7 @@ class EthereumSignedMessage(private val id: String, private val personalMessage:
         return getWallet()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .flatMap { wallet -> Single.fromCallable { wallet.signTransactionWithoutMinus27(unsignedValue) } }
+                .flatMap { it.signTransaction(unsignedValue, false) }
                 .map { mapToMethodCall(it) }
                 .subscribeOn(Schedulers.io())
     }
