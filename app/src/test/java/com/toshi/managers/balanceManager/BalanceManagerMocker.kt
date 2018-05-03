@@ -48,9 +48,7 @@ class BalanceManagerMocker(
     fun mockWithWalletInit(): BalanceManager {
         val balanceManager = mock()
         val wallet = mockWallet(masterSeed)
-                .existingWallet
-                .toBlocking()
-                .value()
+
         balanceManager.init(wallet).await()
         return balanceManager
     }

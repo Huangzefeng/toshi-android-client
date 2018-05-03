@@ -21,6 +21,7 @@ package com.toshi
 
 import android.content.Context
 import com.toshi.crypto.HDWallet
+import com.toshi.crypto.HdWalletBuilder
 import com.toshi.model.local.network.Network
 import com.toshi.model.local.network.Networks
 import com.toshi.testSharedPrefs.TestWalletPrefs
@@ -49,7 +50,10 @@ fun mockWallet(masterSeed: String): HDWallet {
     val prefs = TestWalletPrefs()
     prefs.setMasterSeed(masterSeed)
     val context = Mockito.mock(Context::class.java)
-    return HDWallet(prefs, context)
+    return HdWalletBuilder(prefs, context)
+            .getExistingWallet()
+            .toBlocking()
+            .value()
 }
 
 fun <T> any(): T {
