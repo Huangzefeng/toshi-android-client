@@ -167,7 +167,7 @@ class ToshiManagerTests {
     @Test
     fun `init app with valid master seed`() {
         try {
-            val wallet = hdWalletBuilder.createFromMasterSeed(masterSeed).toBlocking().value()
+            val wallet = hdWalletBuilder.buildFromMasterSeed(masterSeed).toBlocking().value()
             toshiManager.init(wallet).await()
         } catch (e: Exception) {
             fail("No exception should be thrown when initiating wallet with valid master seed")
@@ -177,7 +177,7 @@ class ToshiManagerTests {
     @Test
     fun `init app with invalid master seed`() {
         try {
-            val wallet = hdWalletBuilder.createFromMasterSeed(invalidMasterSeed).toBlocking().value()
+            val wallet = hdWalletBuilder.buildFromMasterSeed(invalidMasterSeed).toBlocking().value()
             toshiManager.init(wallet).await()
         } catch (e: Exception) {
             assertTrue(e.cause is InvalidMasterSeedException)

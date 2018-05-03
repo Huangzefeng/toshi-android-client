@@ -153,7 +153,7 @@ public class SignInPresenter implements Presenter<SignInActivity> {
 
         final Subscription sub =
                 new HdWalletBuilder()
-                .createFromMasterSeed(masterSeed)
+                .buildFromMasterSeed(masterSeed)
                 .flatMapCompletable(this::initWallet)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
