@@ -19,9 +19,15 @@ package com.toshi.viewModel
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import com.toshi.util.logging.LogUtil
+import com.toshi.view.BaseApplication
+import rx.Single
+import rx.android.schedulers.AndroidSchedulers
+import rx.subscriptions.CompositeSubscription
 
 class WalletsViewModel : ViewModel() {
 
+    val subscriptions by lazy { CompositeSubscription() }
     val wallets by lazy { MutableLiveData<List<Wallet>>() }
 
     init {
@@ -29,20 +35,33 @@ class WalletsViewModel : ViewModel() {
     }
 
     private fun getWallets() {
-        val wallets = listOf(
-                Wallet("Wallet1", "0xd603759f874bdea63e3748073d0d0390bc392770"),
-                Wallet("Wallet2", "0xd603759f874bdea63e3748073d0d0390bc392771"),
-                Wallet("Wallet3", "0xd603759f874bdea63e3748073d0d0390bc392772"),
-                Wallet("Wallet4", "0xd603759f874bdea63e3748073d0d0390bc392773"),
-                Wallet("Wallet5", "0xd603759f874bdea63e3748073d0d0390bc392774"),
-                Wallet("Wallet6", "0xd603759f874bdea63e3748073d0d0390bc392775"),
-                Wallet("Wallet7", "0xd603759f874bdea63e3748073d0d0390bc392776"),
-                Wallet("Wallet8", "0xd603759f874bdea63e3748073d0d0390bc392777"),
-                Wallet("Wallet9", "0xd603759f874bdea63e3748073d0d0390bc392778"),
-                Wallet("Wallet10", "0xd603759f874bdea63e3748073d0d0390bc392779")
-        )
+        val sub = BaseApplication.get().toshiManager
+                .getWallet()
+                .flatMap { it.getAddresses() }
+                .flatMap { toWallet(it) }
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        {
+                            LogUtil.d("got wallet list!")
+                            this.wallets.postValue(it)
+                        },
+                        { LogUtil.exception("Could not load wallet addresses", it) }
+                )
 
-        this.wallets.value = wallets
+        subscriptions.add(sub)
+    }
+
+    private fun toWallet(list: List<String>): Single<List<Wallet>> {
+        return Single.fromCallable {
+            return@fromCallable list.mapIndexed { index, address ->
+                return@mapIndexed Wallet("Wallet${index + 1}", address)
+            }
+        }
+    }
+
+    override fun onCleared() {
+        subscriptions.clear()
+        super.onCleared()
     }
 }
 

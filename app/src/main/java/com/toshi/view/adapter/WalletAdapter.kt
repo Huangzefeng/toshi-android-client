@@ -25,7 +25,7 @@ import com.toshi.view.adapter.viewholder.WalletViewHolder
 import com.toshi.viewModel.Wallet
 
 class WalletAdapter(
-        private val onItemClickedListener: (Wallet) -> Unit
+        private val onItemClickedListener: (Int) -> Unit
 ) : RecyclerView.Adapter<WalletViewHolder>() {
 
     private val wallets by lazy { mutableListOf<Wallet>() }
@@ -33,9 +33,11 @@ class WalletAdapter(
     private var currentSelectedItem = 0
     private var previousSelectedItem = 0
 
-    fun setItems(wallets: List<Wallet>) {
+    fun setItems(wallets: List<Wallet>, selectedWalletIndex: Int) {
         this.wallets.clear()
         this.wallets.addAll(wallets)
+        currentSelectedItem = selectedWalletIndex
+        this.notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WalletViewHolder {
@@ -49,16 +51,14 @@ class WalletAdapter(
         holder.apply {
             setWallet(wallet)
             if (isSelected) setSelected() else setUnselected()
-            setOnItemClickedListener(wallet, position) { wallet, pos ->
-                handleSelectedItem(wallet, pos)
-            }
+            setOnItemClickedListener(position) { handleSelectedItem(it) }
         }
     }
 
-    private fun handleSelectedItem(wallet: Wallet, position: Int) {
+    private fun handleSelectedItem(position: Int) {
         previousSelectedItem = currentSelectedItem
         currentSelectedItem = position
-        onItemClickedListener(wallet)
+        onItemClickedListener(position)
         notifyItemChanged(previousSelectedItem)
     }
 

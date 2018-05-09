@@ -25,10 +25,15 @@ import com.toshi.R
 import com.toshi.extensions.addHorizontalLineDivider
 import com.toshi.extensions.getMultiplePxSize
 import com.toshi.extensions.getViewModel
+import com.toshi.util.logging.LogUtil
+import com.toshi.view.BaseApplication
 import com.toshi.view.adapter.WalletAdapter
+import com.toshi.viewModel.Wallet
 import com.toshi.viewModel.WalletsViewModel
 import kotlinx.android.synthetic.main.activity_wallets.closeButton
 import kotlinx.android.synthetic.main.activity_wallets.wallets
+import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 
 class WalletsActivity : AppCompatActivity() {
 
@@ -57,7 +62,7 @@ class WalletsActivity : AppCompatActivity() {
     }
 
     private fun initAdapter() {
-        walletAdapter = WalletAdapter {}
+        walletAdapter = WalletAdapter { setCurrentWallet(it) }
         wallets.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = walletAdapter
@@ -67,9 +72,30 @@ class WalletsActivity : AppCompatActivity() {
         }
     }
 
+    private fun setCurrentWallet(walletIndex: Int) {
+        BaseApplication.get().toshiManager
+                .getWallet()
+                .flatMap { it.changeWallet(walletIndex) }
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        { finish() },
+                        { LogUtil.exception("Could not change wallet", it) }
+                )
+    }
+
     private fun initObservers() {
-        viewModel.wallets.observe(this, Observer {
-            if (it != null) walletAdapter.setItems(it)
-        })
+        viewModel.wallets.observe(this, Observer { updateAdapterItems(it) })
+    }
+
+    private fun updateAdapterItems(wallets: List<Wallet>?) {
+        if (wallets == null) return
+        BaseApplication.get().toshiManager
+                .getWallet()
+                .flatMap { it.getWalletIndex() }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { walletAdapter.setItems(wallets, it) },
+                        { LogUtil.exception("Could not update wallet adapter", it) }
+                )
     }
 }

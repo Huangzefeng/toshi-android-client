@@ -41,10 +41,10 @@ class WalletViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
         itemView.checkbox.isChecked = false
     }
 
-    fun setOnItemClickedListener(wallet: Wallet, position: Int, listener: (Wallet, Int) -> Unit) {
+    fun setOnItemClickedListener(position: Int, listener: (Int) -> Unit) {
         itemView.setOnClickListener {
             updateSelectedState()
-            listener(wallet, position)
+            listener(position)
         }
     }
 

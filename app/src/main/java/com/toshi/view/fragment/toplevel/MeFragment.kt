@@ -62,6 +62,7 @@ import kotlinx.android.synthetic.main.fragment_me.securityStatus
 import kotlinx.android.synthetic.main.fragment_me.settings
 import kotlinx.android.synthetic.main.fragment_me.username
 import kotlinx.android.synthetic.main.fragment_me.version
+import kotlinx.android.synthetic.main.fragment_me.wallet
 import java.math.BigInteger
 
 class MeFragment : TopLevelFragment() {
@@ -119,6 +120,7 @@ class MeFragment : TopLevelFragment() {
     private fun initClickListeners() {
         myProfileCard.setOnClickListener { startActivity<ViewProfileActivity>() }
         backupPhrase.setOnClickListener { startActivity<BackupPhraseInfoActivity>() }
+        wallet.setOnClickListener { startActivity<WalletsActivity>() }
         network.setOnClickListener { startActivity<NetworkSwitcherActivity>() }
         version.setOnClickListener { handleVersionClicked() }
     }
