@@ -21,31 +21,23 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.toshi.R
-import com.toshi.model.network.token.ERCToken
-import com.toshi.model.network.token.Token
-import com.toshi.view.adapter.viewholder.TokenType
-import com.toshi.view.adapter.viewholder.TokensViewHolder
+import com.toshi.view.adapter.viewholder.TokenFooterViewHolder
 
-class TokenAdapter(
-        private val tokenType: TokenType
-) : BaseCompoundableAdapter<TokensViewHolder, Token>() {
+class TokenFooterAdapter : BaseCompoundableAdapter<TokenFooterViewHolder, Int>() {
 
-    var tokenListener: ((Token) -> Unit)? = null
-    var ERC721Listener: ((ERCToken) -> Unit)? = null
+    init {
+        setItemList(listOf(1))
+    }
 
     override fun compoundableBindViewHolder(viewHolder: RecyclerView.ViewHolder, adapterIndex: Int) {
-        val typedHolder = viewHolder as TokensViewHolder
+        val typedHolder = viewHolder as TokenFooterViewHolder
         onBindViewHolder(typedHolder, adapterIndex)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TokensViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.list_item__token, parent, false)
-        return TokensViewHolder(tokenType, itemView)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TokenFooterViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.list_item__token_footer, parent, false)
+        return TokenFooterViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: TokensViewHolder, position: Int) {
-        val token = safelyAt(position)
-                ?: throw AssertionError("No user at $position")
-        holder.setToken(token, tokenListener, ERC721Listener)
-    }
+    override fun onBindViewHolder(holder: TokenFooterViewHolder, position: Int) {}
 }

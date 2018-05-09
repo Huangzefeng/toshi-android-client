@@ -102,7 +102,7 @@ class ERC721Fragment : RefreshFragment() {
     private fun showAndAddTokens(ERCTokenList: List<Token>) {
         tokens.visibility = View.VISIBLE
         emptyState.visibility = View.GONE
-        tokenAdapter.addTokens(ERCTokenList)
+        tokenAdapter.setItemList(ERCTokenList)
     }
 
     private fun showEmptyStateView() {

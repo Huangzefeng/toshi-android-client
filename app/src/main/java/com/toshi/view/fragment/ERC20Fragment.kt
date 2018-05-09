@@ -33,8 +33,12 @@ import com.toshi.extensions.toast
 import com.toshi.model.network.token.ERCToken
 import com.toshi.model.network.token.EtherToken
 import com.toshi.model.network.token.Token
+import com.toshi.view.activity.AddCustomTokenActivity
 import com.toshi.view.activity.ViewTokenActivity
+import com.toshi.view.adapter.AddTokenAdapter
+import com.toshi.view.adapter.CompoundAdapter
 import com.toshi.view.adapter.TokenAdapter
+import com.toshi.view.adapter.TokenFooterAdapter
 import com.toshi.view.adapter.viewholder.TokenType
 import com.toshi.view.fragment.toplevel.WalletFragment
 import com.toshi.viewModel.TokenViewModel
@@ -46,6 +50,8 @@ import kotlinx.android.synthetic.main.fragment_token.tokens
 class ERC20Fragment : RefreshFragment() {
 
     private lateinit var viewModel: TokenViewModel
+
+    private lateinit var compoundAdapter: CompoundAdapter
     private lateinit var tokenAdapter: TokenAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -67,12 +73,24 @@ class ERC20Fragment : RefreshFragment() {
 
     private fun initAdapter() {
         tokenAdapter = TokenAdapter(TokenType.ERC20Token())
+        tokenAdapter.tokenListener = { startViewTokenActivity(it) }
+
+        val addTokenAdapter = AddTokenAdapter { startActivity<AddCustomTokenActivity>() }
+        val tokenFooterAdapter = TokenFooterAdapter()
+
+        compoundAdapter = CompoundAdapter(
+                listOf(
+                        tokenAdapter,
+                        addTokenAdapter,
+                        tokenFooterAdapter
+                )
+        )
+
         tokens.apply {
             layoutManager = LinearLayoutManager(activity)
-            adapter = tokenAdapter
+            adapter = compoundAdapter
             addHorizontalLineDivider(skipNEndPositions = 1)
         }
-        tokenAdapter.tokenListener = { startViewTokenActivity(it) }
     }
 
     private fun startViewTokenActivity(token: Token) {
@@ -106,7 +124,7 @@ class ERC20Fragment : RefreshFragment() {
     private fun showAndAddTokens(ERCTokenList: List<Token>) {
         tokens.visibility = View.VISIBLE
         emptyState.visibility = View.GONE
-        tokenAdapter.addTokens(ERCTokenList)
+        tokenAdapter.setItemList(ERCTokenList)
     }
 
     private fun showEmptyStateView() {
