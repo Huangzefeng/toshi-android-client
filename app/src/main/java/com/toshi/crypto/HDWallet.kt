@@ -23,6 +23,7 @@ import com.toshi.exception.InvalidKeySetException
 import com.toshi.exception.SignTransactionException
 import com.toshi.util.logging.LogUtil
 import rx.Single
+import rx.schedulers.Schedulers
 
 class HDWallet(
         private val identityKey: ECKey,
@@ -68,10 +69,24 @@ class HDWallet(
         }
     }
 
-    fun changeWallet(index: Int): Boolean {
-        if (paymentKeys.size <= index) return false
-        currentKeyIndex = index
-        return true
+    fun changeWallet(index: Int): Single<Boolean> {
+        return Single.fromCallable {
+            if (paymentKeys.size <= index) return@fromCallable false
+            currentKeyIndex = index
+            return@fromCallable true
+        }
+    }
+
+    fun getWalletIndex(): Single<Int> {
+        return Single.fromCallable {  currentKeyIndex }
+            .subscribeOn(Schedulers.io())
+    }
+
+    fun getWalletCount(): Single<Int> {
+        return Single.fromCallable {
+            return@fromCallable paymentKeys.size
+        }
+        .subscribeOn(Schedulers.io())
     }
 
     fun signTransaction(data: String, hash: Boolean): Single<String> {
