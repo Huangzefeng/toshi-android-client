@@ -22,13 +22,16 @@ import com.toshi.crypto.util.TypeConverter
 import com.toshi.exception.InvalidKeySetException
 import com.toshi.exception.SignTransactionException
 import com.toshi.util.logging.LogUtil
+import rx.Scheduler
 import rx.Single
 import rx.schedulers.Schedulers
+import java.util.concurrent.Executors
 
 class HDWallet(
         private val identityKey: ECKey,
         private val paymentKeys: List<ECKey>,
-        val masterSeed: String
+        val masterSeed: String,
+        private val scheduler: Scheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 ) {
     private var currentKeyIndex = 0
     private val paymentKey: ECKey
@@ -59,14 +62,17 @@ class HDWallet(
         }
     }
 
-    fun signTransaction(data: String): String? {
-        try {
-            val transactionBytes = TypeConverter.StringHexToByteArray(data)
-            return sign(transactionBytes, paymentKey)
-        } catch (e: Exception) {
-            LogUtil.exception("Unable to sign transaction. $e")
-            throw SignTransactionException("Unable to sign transaction")
+    fun signTransaction(data: String): Single<String> {
+        return Single.fromCallable {
+            try {
+                val transactionBytes = TypeConverter.StringHexToByteArray(data)
+                return@fromCallable sign(transactionBytes, paymentKey)
+            } catch (e: Exception) {
+                LogUtil.exception("Unable to sign transaction", e)
+                throw SignTransactionException("Unable to sign transaction")
+            }
         }
+        .subscribeOn(scheduler)
     }
 
     fun changeWallet(index: Int): Single<Boolean> {
@@ -79,7 +85,7 @@ class HDWallet(
 
     fun getWalletIndex(): Single<Int> {
         return Single.fromCallable {  currentKeyIndex }
-            .subscribeOn(Schedulers.io())
+            .subscribeOn(scheduler)
     }
 
     fun getAddresses(): Single<List<String>> {
@@ -93,6 +99,7 @@ class HDWallet(
             val transactionBytes = if (hash) sha3(bytes) else bytes
             return@fromCallable signWithoutMinus27(transactionBytes, paymentKey)
         }
+        .subscribeOn(scheduler)
     }
 
     private fun sign(bytes: ByteArray, key: ECKey, doSha3Hash: Boolean = true): String {

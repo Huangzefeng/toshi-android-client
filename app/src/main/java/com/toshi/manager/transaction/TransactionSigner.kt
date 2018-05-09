@@ -46,12 +46,17 @@ class TransactionSigner(
     fun signW3Transaction(paymentTask: W3PaymentTask) = signTransaction(paymentTask.unsignedTransaction)
 
     private fun signTransaction(unsignedTransaction: UnsignedTransaction): Single<SignedTransaction> {
+        val wallet = wallet
+                ?: throw IllegalStateException("Wallet is null TransactionSigner::signTransaction")
+        return wallet.signTransaction(unsignedTransaction.transaction)
+                .flatMap { setTransactionSignature(unsignedTransaction, it) }
+    }
+
+    private fun setTransactionSignature(unsignedTransaction: UnsignedTransaction, it: String?): Single<SignedTransaction> {
         return Single.fromCallable {
-            val wallet = wallet ?: throw IllegalStateException("Wallet is null TransactionSigner::signTransaction")
-            val signature = wallet.signTransaction(unsignedTransaction.transaction)
             return@fromCallable SignedTransaction()
                     .setEncodedTransaction(unsignedTransaction.transaction)
-                    .setSignature(signature)
+                    .setSignature(it)
         }
     }
 

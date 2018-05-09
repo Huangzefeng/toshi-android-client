@@ -99,7 +99,7 @@ class OutgoingTransactionManager(
                 .map { SentToshiPaymentTask(paymentTask, it) }
                 .doOnSuccess { broadcastSuccessfulPayment(paymentTask) }
                 .doOnError { broadcastUnsuccessfulPayment(paymentTask, it) }
-                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
                 .subscribe(
                         { handleOutgoingToshiPaymentSuccess(it, storedSofaMessage) },
                         { handleOutgoingPaymentError(it, paymentTask.user, storedSofaMessage) }
