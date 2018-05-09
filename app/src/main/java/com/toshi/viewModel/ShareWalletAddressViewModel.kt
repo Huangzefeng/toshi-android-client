@@ -25,6 +25,7 @@ import com.toshi.crypto.HDWallet
 import com.toshi.model.local.network.Networks
 import com.toshi.util.QrCode
 import com.toshi.util.SingleLiveEvent
+import com.toshi.util.logging.LogUtil
 import com.toshi.view.BaseApplication
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
@@ -35,29 +36,39 @@ class ShareWalletAddressViewModel : ViewModel() {
     private val toshiManager by lazy { BaseApplication.get().toshiManager }
     private val subscriptions by lazy { CompositeSubscription() }
     val qrCode by lazy { MutableLiveData<Bitmap>() }
-    val wallet by lazy { MutableLiveData<HDWallet>() }
+    val paymentAddress by lazy { MutableLiveData<String>() }
     val error by lazy { SingleLiveEvent<Int>() }
 
     init {
-        getWallet()
+        initObservers()
     }
 
-    private fun getWallet() {
-        val sub = toshiManager
-                .getWallet()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnSuccess { generateQrCode(it) }
+    private fun initObservers() {
+        val sub = toshiManager.getWallet()
                 .subscribe(
-                        { wallet.value = it },
-                        { error.value = R.string.wallet_address_error }
+                        { initAddressObserver(it) },
+                        { LogUtil.exception("Could not get wallet", it) }
                 )
-
         subscriptions.add(sub)
     }
 
-    private fun generateQrCode(wallet: HDWallet) {
-        val sub = QrCode.generatePaymentAddressQrCode(wallet.paymentAddress)
+    private fun initAddressObserver(wallet: HDWallet) {
+        val sub = wallet.getPaymentAddressObservable()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        { if (it != null) updatePaymentAddress(it) },
+                        { error.value = R.string.wallet_address_error }
+                )
+        subscriptions.add(sub)
+    }
+
+    private fun updatePaymentAddress(value: String) {
+        paymentAddress.value = value
+        generateQrCode(value)
+    }
+
+    private fun generateQrCode(paymentAddress: String) {
+        val sub = QrCode.generatePaymentAddressQrCode(paymentAddress)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(

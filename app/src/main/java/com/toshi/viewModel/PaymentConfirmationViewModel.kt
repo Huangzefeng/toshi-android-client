@@ -164,11 +164,11 @@ class PaymentConfirmationViewModel : ViewModel() {
 
     private fun getPaymentTaskWithToshiId(toshiId: String, ethAmount: String) {
         val sub = Single.zip(
-                toshiManager.getWallet(),
+                getMyPaymentAddress(),
                 recipientManager.getUserFromToshiId(toshiId),
-                { wallet, recipient -> Pair(wallet, recipient) }
+                { paymentAddress, recipient -> Pair(paymentAddress, recipient) }
         )
-        .flatMap { getPaymentTask(it.first.paymentAddress, it.second.paymentAddress, ethAmount, isSendingMaxAmount()) }
+        .flatMap { getPaymentTask(it.first, it.second.paymentAddress, ethAmount, isSendingMaxAmount()) }
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .doOnSubscribe { isLoading.value = true }
@@ -181,13 +181,19 @@ class PaymentConfirmationViewModel : ViewModel() {
         this.subscriptions.add(sub)
     }
 
+    private fun getMyPaymentAddress(): Single<String> {
+        return toshiManager.getWallet()
+                .flatMap { it.getPaymentAddressAsync() }
+    }
+
     private fun getPaymentTaskWithTokenAddress(tokenAddress: String,
                                                tokenSymbol: String,
                                                tokenDecimals: Int,
                                                toPaymentAddress: String,
                                                ethAmount: String) {
         val sub = toshiManager.getWallet()
-                .flatMap { getPaymentTask(it.paymentAddress, toPaymentAddress, ethAmount, tokenAddress, tokenSymbol, tokenDecimals) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { getPaymentTask(it, toPaymentAddress, ethAmount, tokenAddress, tokenSymbol, tokenDecimals) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe { isLoading.value = true }
@@ -201,7 +207,8 @@ class PaymentConfirmationViewModel : ViewModel() {
 
     private fun getPaymentTaskWithPaymentAddress(toPaymentAddress: String, ethAmount: String) {
         val sub = toshiManager.getWallet()
-                .flatMap { getPaymentTask(it.paymentAddress, toPaymentAddress, ethAmount, isSendingMaxAmount()) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { getPaymentTask(it, toPaymentAddress, ethAmount, isSendingMaxAmount()) }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnSubscribe { isLoading.value = true }

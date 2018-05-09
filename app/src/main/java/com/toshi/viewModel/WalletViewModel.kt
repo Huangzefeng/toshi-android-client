@@ -20,10 +20,11 @@ package com.toshi.viewModel
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import com.toshi.R
+import com.toshi.crypto.HDWallet
 import com.toshi.util.SingleLiveEvent
+import com.toshi.util.logging.LogUtil
 import com.toshi.view.BaseApplication
 import rx.android.schedulers.AndroidSchedulers
-import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 
 class WalletViewModel : ViewModel() {
@@ -35,22 +36,25 @@ class WalletViewModel : ViewModel() {
     val error by lazy { SingleLiveEvent<Int>() }
 
     init {
-        getWalletAddress()
+        initObservers()
     }
 
-    private fun getWalletAddress() {
-        val sub = toshiManager
-                .getWallet()
-                .toObservable()
-                .filter { wallet -> wallet != null }
-                .toSingle()
-                .subscribeOn(Schedulers.io())
+    private fun initObservers() {
+        val sub = toshiManager.getWallet()
+                .subscribe(
+                        { if (it != null) initAddressObserver(it) },
+                        { LogUtil.exception("Could not get wallet", it) }
+                )
+        subscriptions.add(sub)
+    }
+
+    private fun initAddressObserver(wallet: HDWallet) {
+        val sub = wallet.getPaymentAddressObservable()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        { walletAddress.value = it.paymentAddress },
+                        { walletAddress.value = it },
                         { error.value = R.string.wallet_address_error }
                 )
-
         subscriptions.add(sub)
     }
 

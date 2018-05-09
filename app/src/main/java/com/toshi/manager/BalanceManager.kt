@@ -120,31 +120,36 @@ class BalanceManager(
 
     private fun getBalance(): Single<Balance> {
         return getWallet()
-                .flatMap { ethService.get().getBalance(it.paymentAddress) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { ethService.get().getBalance(it) }
                 .subscribeOn(scheduler)
     }
 
     fun getERC20Tokens(): Single<ERC20Tokens> {
         return getWallet()
-                .flatMap { ethService.get().getTokens(it.paymentAddress) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { ethService.get().getTokens(it) }
                 .subscribeOn(scheduler)
     }
 
     fun getERC20Token(contractAddress: String): Single<ERCToken> {
         return getWallet()
-                .flatMap { ethService.get().getToken(it.paymentAddress, contractAddress) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { ethService.get().getToken(it, contractAddress) }
                 .subscribeOn(scheduler)
     }
 
     fun getERC721Tokens(): Single<ERC721Tokens> {
         return getWallet()
-                .flatMap { ethService.get().getCollectibles(it.paymentAddress) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { ethService.get().getCollectibles(it) }
                 .subscribeOn(scheduler)
     }
 
     fun getERC721Token(contactAddress: String): Single<ERC721TokenWrapper> {
         return getWallet()
-                .flatMap { ethService.get().getCollectible(it.paymentAddress, contactAddress) }
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { ethService.get().getCollectible(it, contactAddress) }
                 .subscribeOn(scheduler)
     }
 

@@ -90,14 +90,15 @@ class ShareWalletAddressDialog : DialogFragment() {
     }
 
     private fun copyToClipboard() {
-        val paymentAddress = viewModel.wallet.value?.paymentAddress ?: return
+        val paymentAddress = viewModel.paymentAddress.value
+                ?: throw IllegalStateException("PaymentAddress is null")
         val clipboard = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
         clipboard?.primaryClip = ClipData.newPlainText(getString(R.string.payment_address), paymentAddress)
         toast(R.string.copied_to_clipboard)
     }
 
     private fun sharePaymentAddress() {
-        val paymentAddress = viewModel.wallet.value?.paymentAddress ?: return
+        val paymentAddress = viewModel.paymentAddress.value ?: return
         startActivity(Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, paymentAddress)
@@ -109,8 +110,8 @@ class ShareWalletAddressDialog : DialogFragment() {
         viewModel.qrCode.observe(this, Observer {
             if (it != null) renderQrCode(it)
         })
-        viewModel.wallet.observe(this, Observer {
-            if (it != null) walletAddress.text = it.paymentAddress
+        viewModel.paymentAddress.observe(this, Observer {
+            if (it != null) walletAddress.text = it
         })
         viewModel.error.observe(this, Observer {
             if (it != null) toast(it)

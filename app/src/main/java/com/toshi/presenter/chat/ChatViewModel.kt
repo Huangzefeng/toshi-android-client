@@ -235,8 +235,9 @@ class ChatViewModel(private val threadId: String) : ViewModel() {
     fun sendPaymentRequestWithValue(value: String) {
         val sub = toshiManager
                 .getWallet()
-                .flatMap { generateLocalPrice(value, it.paymentAddress) }
-                .subscribeOn(Schedulers.io())
+                .flatMap { it.getPaymentAddressAsync() }
+                .flatMap { generateLocalPrice(value, it) }
+                .observeOn(Schedulers.io())
                 .subscribe(
                         { sendPaymentRequest(it) },
                         { LogUtil.exception(it) }
