@@ -22,9 +22,11 @@ import com.toshi.crypto.util.TypeConverter
 import com.toshi.exception.InvalidKeySetException
 import com.toshi.exception.SignTransactionException
 import com.toshi.util.logging.LogUtil
+import rx.Observable
 import rx.Scheduler
 import rx.Single
 import rx.schedulers.Schedulers
+import rx.subjects.BehaviorSubject
 import java.util.concurrent.Executors
 
 class HDWallet(
@@ -33,16 +35,15 @@ class HDWallet(
         val masterSeed: String,
         private val scheduler: Scheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 ) {
+    private val paymentAddressSubject = BehaviorSubject.create<String>()
     private var currentKeyIndex = 0
-    private val paymentKey: ECKey
-        get() {
-            return paymentKeys.getOrNull(currentKeyIndex) ?: paymentKeys[0]
-        }
 
     val paymentAddress: String
         get() {
-            return TypeConverter.toJsonHex(paymentKey.address)
+            return paymentAddressSubject.value
+                    ?: throw IllegalStateException("PaymentAddress is null")
         }
+
     val ownerAddress: String
         get() {
             val identityAddress = identityKey.address
@@ -51,6 +52,25 @@ class HDWallet(
 
     init {
         if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
+        paymentAddressSubject.onNext(addressFromIndex(0))
+    }
+
+    private fun addressFromIndex(index: Int): String {
+        val key = getKeyFromIndex(index)
+        return TypeConverter.toJsonHex(key.address)
+    }
+
+    private fun getKeyFromIndex(index: Int): ECKey {
+        return paymentKeys.getOrNull(index) ?: paymentKeys[0]
+    }
+
+    fun getPaymentAddressObservable(): Observable<String> {
+        return paymentAddressSubject.subscribeOn(scheduler)
+    }
+
+    fun getPaymentAddressAsync(): Single<String> {
+        return Single.fromCallable { addressFromIndex(currentKeyIndex) }
+                .subscribeOn(scheduler)
     }
 
     fun signIdentity(data: String): String {
@@ -64,21 +84,27 @@ class HDWallet(
 
     fun signTransaction(data: String): Single<String> {
         return Single.fromCallable {
-            try {
-                val transactionBytes = TypeConverter.StringHexToByteArray(data)
-                return@fromCallable sign(transactionBytes, paymentKey)
-            } catch (e: Exception) {
-                LogUtil.exception("Unable to sign transaction", e)
-                throw SignTransactionException("Unable to sign transaction")
-            }
+            val key = getKeyFromIndex(currentKeyIndex)
+            return@fromCallable signDataWithPaymentKey(key, data)
         }
         .subscribeOn(scheduler)
+    }
+
+    private fun signDataWithPaymentKey(paymentKey: ECKey, data: String): String {
+        try {
+            val transactionBytes = TypeConverter.StringHexToByteArray(data)
+            return sign(transactionBytes, paymentKey)
+        } catch (e: Exception) {
+            LogUtil.exception("Unable to sign transaction", e)
+            throw SignTransactionException("Unable to sign transaction")
+        }
     }
 
     fun changeWallet(index: Int): Single<Boolean> {
         return Single.fromCallable {
             if (paymentKeys.size <= index) return@fromCallable false
             currentKeyIndex = index
+            paymentAddressSubject.onNext(addressFromIndex(index))
             return@fromCallable true
         }
     }
@@ -90,14 +116,15 @@ class HDWallet(
 
     fun getAddresses(): Single<List<String>> {
         return Single.fromCallable { paymentKeys.map { TypeConverter.toJsonHex(it.address) } }
-            .subscribeOn(Schedulers.io())
+            .subscribeOn(scheduler)
     }
 
     fun signTransaction(data: String, hash: Boolean): Single<String> {
         return Single.fromCallable {
             val bytes = TypeConverter.StringHexToByteArray(data)
             val transactionBytes = if (hash) sha3(bytes) else bytes
-            return@fromCallable signWithoutMinus27(transactionBytes, paymentKey)
+            val key = getKeyFromIndex(currentKeyIndex)
+            return@fromCallable signWithoutMinus27(transactionBytes, key)
         }
         .subscribeOn(scheduler)
     }
@@ -123,6 +150,6 @@ class HDWallet(
 
     override fun toString(): String {
         val identityAddress = identityKey.address
-        return "Identity: $identityAddress\nPayment: $paymentAddress"
+        return "Identity: $identityAddress"
     }
 }
