@@ -82,11 +82,9 @@ class HDWallet(
             .subscribeOn(Schedulers.io())
     }
 
-    fun getWalletCount(): Single<Int> {
-        return Single.fromCallable {
-            return@fromCallable paymentKeys.size
-        }
-        .subscribeOn(Schedulers.io())
+    fun getAddresses(): Single<List<String>> {
+        return Single.fromCallable { paymentKeys.map { TypeConverter.toJsonHex(it.address) } }
+            .subscribeOn(Schedulers.io())
     }
 
     fun signTransaction(data: String, hash: Boolean): Single<String> {

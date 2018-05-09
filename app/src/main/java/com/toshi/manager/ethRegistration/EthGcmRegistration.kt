@@ -106,8 +106,15 @@ class EthGcmRegistration(
         return when {
             serverTime == null -> throw IllegalStateException("ServerTime was null")
             token == null -> throw IllegalStateException("token was null")
-            else -> ethService.get().registerGcm(serverTime.get(), GcmRegistration(token, wallet.paymentAddress))
+            else -> registerGcm(serverTime.get(), token)
         }
+    }
+
+    private fun registerGcm(serverTime: Long, token: String?): Completable {
+        return wallet.getAddresses()
+                .flatMapCompletable {
+                    ethService.get().registerGcm(serverTime, GcmRegistration(token, it))
+                }
     }
 
     private fun updateCurrentNetwork(network: Network) {

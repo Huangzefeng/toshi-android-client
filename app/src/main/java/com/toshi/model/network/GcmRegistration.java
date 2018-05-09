@@ -17,12 +17,14 @@
 
 package com.toshi.model.network;
 
+import java.util.List;
+
 public class GcmRegistration {
     private String registration_id;
-    private String address;
+    private List<String> addresses;
 
-    public GcmRegistration(final String gcmRegistrationId, final String address) {
+    public GcmRegistration(final String gcmRegistrationId, final List<String> addresses) {
         this.registration_id = gcmRegistrationId;
-        this.address = address;
+        this.addresses = addresses;
     }
 }
