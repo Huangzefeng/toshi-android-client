@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2017. Toshi Inc
+  ~
+  ~  This program is free software: you can redistribute it and/or modify
+  ~     it under the terms of the GNU General Public License as published by
+  ~     the Free Software Foundation, either version 3 of the License, or
+  ~     (at your option) any later version.
+  ~
+  ~     This program is distributed in the hope that it will be useful,
+  ~     but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~     GNU General Public License for more details.
+  ~
+  ~     You should have received a copy of the GNU General Public License
+  ~     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        style="@style/Toolbar">
+
+        <ImageButton
+            android:id="@+id/closeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:tint="@color/textColorContrast"
+            app:srcCompat="@drawable/ic_arrow_back"
+            style="@style/closeButtonStyle"/>
+
+        <android.support.v4.widget.Space
+            android:layout_width="@dimen/margin_primary"
+            android:layout_height="@dimen/space_unused_dimension" />
+
+        <TextView
+            android:id="@+id/toolbarTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/Toolbar.TitleText"
+            android:text="@string/add_custom_token"/>
+
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingRight="@dimen/margin_primary"
+            android:paddingLeft="@dimen/margin_primary"
+            android:clipToPadding="false">
+
+            <Space
+                android:layout_width="@dimen/space_unused_dimension"
+                android:layout_height="36dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_description"
+                android:textColor="@color/textColorSecondaryTransparent"
+                android:text="@string/contract_address"/>
+
+            <EditText
+                android:id="@+id/contractAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_subtitle"
+                android:textColorHint="@color/textColorHint"
+                android:textColor="@color/textColorPrimaryTransparent"
+                android:drawableEnd="@drawable/scan_qr"/>
+
+            <Space
+                android:layout_width="@dimen/space_unused_dimension"
+                android:layout_height="28dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_description"
+                android:textColor="@color/textColorSecondaryTransparent"
+                android:text="@string/name"/>
+
+            <EditText
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_subtitle"
+                android:textColorHint="@color/textColorHint"
+                android:textColor="@color/textColorPrimaryTransparent" />
+
+            <Space
+                android:layout_width="@dimen/space_unused_dimension"
+                android:layout_height="28dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_description"
+                android:textColor="@color/textColorSecondaryTransparent"
+                android:text="@string/symbol"/>
+
+            <EditText
+                android:id="@+id/symbol"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_subtitle"
+                android:textColorHint="@color/textColorHint"
+                android:textColor="@color/textColorPrimaryTransparent" />
+
+            <Space
+                android:layout_width="@dimen/space_unused_dimension"
+                android:layout_height="28dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_description"
+                android:textColor="@color/textColorSecondaryTransparent"
+                android:text="@string/decimals"/>
+
+            <EditText
+                android:id="@+id/decimals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_size_subtitle"
+                android:textColorHint="@color/textColorHint"
+                android:textColor="@color/textColorPrimaryTransparent" />
+
+            <Space
+                android:layout_width="@dimen/space_unused_dimension"
+                android:layout_height="28dp" />
+
+            <Button
+                android:id="@+id/addTokenBtn"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                style="@style/FlatButtonAllCaps"
+                android:background="@drawable/background_with_radius_disabled"
+                android:textColor="#FFFFFF"
+                android:clickable="false"
+                android:text="@string/add_token" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
