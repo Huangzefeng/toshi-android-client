@@ -21,7 +21,7 @@ package com.toshi.util.sharedPrefs
 
 import android.content.Context
 import com.toshi.extensions.applyClear
-import com.toshi.extensions.applyInt
+import com.toshi.extensions.commitInt
 import com.toshi.extensions.applyString
 import com.toshi.extensions.getString
 import com.toshi.util.FileNames
@@ -39,7 +39,7 @@ class WalletPrefs : WalletPrefsInterface {
 
     override fun getCurrentWalletIndex(): Int = prefs.getInt(WALLET_INDEX, 0)
 
-    override fun setCurrentWalletIndex(index: Int) = prefs.applyInt(WALLET_INDEX, index)
+    override fun setCurrentWalletIndex(index: Int) { prefs.commitInt(WALLET_INDEX, index) }
 
     override fun clear() = prefs.applyClear()
 }
