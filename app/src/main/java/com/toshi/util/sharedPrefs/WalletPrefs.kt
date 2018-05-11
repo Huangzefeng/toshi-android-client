@@ -21,10 +21,12 @@ package com.toshi.util.sharedPrefs
 
 import android.content.Context
 import com.toshi.extensions.applyClear
+import com.toshi.extensions.applyInt
 import com.toshi.extensions.applyString
 import com.toshi.extensions.getString
 import com.toshi.util.FileNames
 import com.toshi.util.sharedPrefs.WalletPrefsInterface.Companion.MASTER_SEED
+import com.toshi.util.sharedPrefs.WalletPrefsInterface.Companion.WALLET_INDEX
 import com.toshi.view.BaseApplication
 
 class WalletPrefs : WalletPrefsInterface {
@@ -34,6 +36,10 @@ class WalletPrefs : WalletPrefsInterface {
     override fun getMasterSeed(): String? = prefs.getString(MASTER_SEED)
 
     override fun setMasterSeed(masterSeed: String?) = prefs.applyString(MASTER_SEED, masterSeed)
+
+    override fun getCurrentWalletIndex(): Int = prefs.getInt(WALLET_INDEX, 0)
+
+    override fun setCurrentWalletIndex(index: Int) = prefs.applyInt(WALLET_INDEX, index)
 
     override fun clear() = prefs.applyClear()
 }

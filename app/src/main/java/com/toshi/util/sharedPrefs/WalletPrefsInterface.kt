@@ -23,9 +23,12 @@ interface WalletPrefsInterface {
 
     companion object {
         const val MASTER_SEED = "ms"
+        const val WALLET_INDEX = "wi"
     }
 
     fun getMasterSeed(): String?
     fun setMasterSeed(masterSeed: String?)
+    fun getCurrentWalletIndex(): Int
+    fun setCurrentWalletIndex(index: Int)
     fun clear()
 }

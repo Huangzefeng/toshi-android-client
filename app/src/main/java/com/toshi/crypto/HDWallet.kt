@@ -22,6 +22,7 @@ import com.toshi.crypto.util.TypeConverter
 import com.toshi.exception.InvalidKeySetException
 import com.toshi.exception.SignTransactionException
 import com.toshi.util.logging.LogUtil
+import com.toshi.util.sharedPrefs.WalletPrefsInterface
 import rx.Observable
 import rx.Scheduler
 import rx.Single
@@ -30,13 +31,14 @@ import rx.subjects.BehaviorSubject
 import java.util.concurrent.Executors
 
 class HDWallet(
+        private val walletPrefs: WalletPrefsInterface,
         private val identityKey: ECKey,
         private val paymentKeys: List<ECKey>,
         val masterSeed: String,
+        private var currentKeyIndex: Int = walletPrefs.getCurrentWalletIndex(),
         private val scheduler: Scheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 ) {
     private val paymentAddressSubject = BehaviorSubject.create<String>()
-    private var currentKeyIndex = 0
 
     val paymentAddress: String
         get() {
@@ -103,6 +105,7 @@ class HDWallet(
     fun changeWallet(index: Int): Single<Boolean> {
         return Single.fromCallable {
             if (paymentKeys.size <= index) return@fromCallable false
+            walletPrefs.setCurrentWalletIndex(index)
             currentKeyIndex = index
             paymentAddressSubject.onNext(addressFromIndex(index))
             return@fromCallable true
@@ -146,6 +149,10 @@ class HDWallet(
         System.arraycopy(privateKey, 0, encryptionKey, 0, 32)
         System.arraycopy(privateKey, 0, encryptionKey, 32, 32)
         return encryptionKey
+    }
+
+    fun clear() {
+        walletPrefs.clear()
     }
 
     override fun toString(): String {

@@ -67,7 +67,7 @@ class HdWalletBuilder(
         val identityKey = deriveKeyFromIdentityWallet(wallet)
         val paymentKeys = deriveKeysFromPaymentWallet(wallet)
         val masterSeed = seedToString(wallet.keyChainSeed)
-        return HDWallet(identityKey, paymentKeys, masterSeed)
+        return HDWallet(walletPrefs, identityKey, paymentKeys, masterSeed)
     }
 
     @Throws(IllegalStateException::class)
@@ -209,9 +209,5 @@ class HdWalletBuilder(
             LogUtil.exception("Error while reading master seed from storage", e)
             throw IllegalStateException(e)
         }
-    }
-
-    fun clear() {
-        walletPrefs.clear()
     }
 }
