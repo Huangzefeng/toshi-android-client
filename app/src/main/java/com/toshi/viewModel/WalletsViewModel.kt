@@ -20,6 +20,7 @@ package com.toshi.viewModel
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import com.toshi.crypto.HDWallet
+import com.toshi.manager.BalanceManager
 import com.toshi.manager.ToshiManager
 import com.toshi.util.SingleLiveEvent
 import com.toshi.util.logging.LogUtil
@@ -33,6 +34,7 @@ import rx.subscriptions.CompositeSubscription
 class WalletsViewModel(
         private val baseApplication: BaseApplication = BaseApplication.get(),
         private val toshiManager: ToshiManager = baseApplication.toshiManager,
+        private val balanceManager: BalanceManager = baseApplication.balanceManager,
         private val subscribeScheduler: Scheduler = Schedulers.io(),
         private val observeScheduler: Scheduler = AndroidSchedulers.mainThread()
 ) : ViewModel() {
@@ -66,9 +68,10 @@ class WalletsViewModel(
         }
     }
 
-    fun setCurrentWallet(walletIndex: Int) {
+    fun updateCurrentWallet(walletIndex: Int) {
         val sub = getWallet()
                 .flatMap { it.changeWallet(walletIndex) }
+                .doOnSuccess { balanceManager.refreshBalance() }
                 .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(

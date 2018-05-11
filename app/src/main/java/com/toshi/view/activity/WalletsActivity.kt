@@ -58,7 +58,7 @@ class WalletsActivity : AppCompatActivity() {
     }
 
     private fun initAdapter() {
-        walletAdapter = WalletAdapter { viewModel.setCurrentWallet(it) }
+        walletAdapter = WalletAdapter { viewModel.updateCurrentWallet(it) }
         wallets.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = walletAdapter
