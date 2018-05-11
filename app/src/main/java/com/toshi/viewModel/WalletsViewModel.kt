@@ -95,7 +95,7 @@ class WalletsViewModel(
         subscriptions.add(sub)
     }
 
-    private fun getWallet() : Single<HDWallet> = toshiManager.getWallet()
+    private fun getWallet(): Single<HDWallet> = toshiManager.getWallet()
 
     override fun onCleared() {
         subscriptions.clear()
