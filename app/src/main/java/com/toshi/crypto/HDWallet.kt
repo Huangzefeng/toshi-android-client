@@ -80,13 +80,12 @@ class HDWallet(
 
     fun signTransaction(data: String): Single<String> {
         return Single.fromCallable {
-            val key = getKeyFromIndex(getCurrentWalletIndex())
+            val currentWalletIndex = getCurrentWalletIndex()
+            val key = getKeyFromIndex(currentWalletIndex)
             return@fromCallable signDataWithPaymentKey(key, data)
         }
         .subscribeOn(scheduler)
     }
-
-    private fun getKeyFromIndex(index: Int): ECKey = paymentKeys.getOrNull(index) ?: paymentKeys[0]
 
     private fun signDataWithPaymentKey(paymentKey: ECKey, data: String): String {
         try {
@@ -141,7 +140,7 @@ class HDWallet(
     }
 
     private fun addressFromIndex(index: Int): String {
-        val key = getKeyFromIndex(index)
+        val key = getSafeKeyFromIndex(index)
         return TypeConverter.toJsonHex(key.address)
     }
 
@@ -158,6 +157,12 @@ class HDWallet(
     fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
 
     private fun getWalletNameFromIndex(index: Int) = "Wallet ${index + 1}"
+
+    @Throws(IllegalStateException::class)
+    private fun getKeyFromIndex(index: Int): ECKey = paymentKeys.getOrNull(index)
+            ?: throw IllegalStateException("Couldn't get key from index: $index")
+
+    private fun getSafeKeyFromIndex(index: Int): ECKey = paymentKeys.getOrNull(index) ?: paymentKeys[0]
 
     private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
 
