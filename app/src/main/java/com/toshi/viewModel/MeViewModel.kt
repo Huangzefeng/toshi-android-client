@@ -48,7 +48,7 @@ class MeViewModel(
 
     val user by lazy { MutableLiveData<User>() }
     val singleBalance by lazy { SingleLiveEvent<Balance>() }
-    val currentWallet by lazy { MutableLiveData<HDWallet>() }
+    val currentWalletName by lazy { MutableLiveData<String>() }
     val currentNetwork by lazy { MutableLiveData<Network>() }
 
     init {
@@ -56,6 +56,7 @@ class MeViewModel(
         getCurrentNetwork()
         getCurrentWallet()
     }
+
     private fun fetchUser() {
         val sub = userManager
                 .getCurrentUserObservable()
@@ -75,7 +76,20 @@ class MeViewModel(
                 .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
-                        { currentWallet.value = it },
+                        { initWalletNameObserver(it) },
+                        { LogUtil.exception("Error when fetching wallet $it") }
+                )
+
+        subscriptions.add(sub)
+    }
+
+    private fun initWalletNameObserver(wallet: HDWallet) {
+        val sub = wallet
+                .getWalletNameObservable()
+                .subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler)
+                .subscribe(
+                        { currentWalletName.value = it },
                         { LogUtil.exception("Error when fetching wallet $it") }
                 )
 

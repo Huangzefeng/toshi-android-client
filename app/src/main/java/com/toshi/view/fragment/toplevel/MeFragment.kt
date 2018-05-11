@@ -163,8 +163,8 @@ class MeFragment : TopLevelFragment() {
         viewModel.currentNetwork.observe(this, Observer {
             if (it != network) currentNetwork.text = it?.name
         })
-        viewModel.currentWallet.observe(this, Observer {
-            if (it != null) currentWallet.text = it.name
+        viewModel.currentWalletName.observe(this, Observer {
+            if (it != null) currentWallet.text = it
         })
     }
 
