@@ -35,7 +35,6 @@ class HDWallet(
         private val identityKey: ECKey,
         private val paymentKeys: List<ECKey>,
         val masterSeed: String,
-        private var currentKeyIndex: Int = walletPrefs.getCurrentWalletIndex(),
         private val scheduler: Scheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 ) {
     private val paymentAddressSubject = BehaviorSubject.create<String>()
@@ -54,7 +53,7 @@ class HDWallet(
 
     init {
         if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
-        paymentAddressSubject.onNext(addressFromIndex(0))
+        paymentAddressSubject.onNext(addressFromIndex(walletPrefs.getCurrentWalletIndex()))
     }
 
     private fun addressFromIndex(index: Int): String {
@@ -70,11 +69,6 @@ class HDWallet(
         return paymentAddressSubject.subscribeOn(scheduler)
     }
 
-    fun getPaymentAddressAsync(): Single<String> {
-        return Single.fromCallable { addressFromIndex(currentKeyIndex) }
-                .subscribeOn(scheduler)
-    }
-
     fun signIdentity(data: String): String {
         try {
             return sign(data.toByteArray(), identityKey)
@@ -86,7 +80,7 @@ class HDWallet(
 
     fun signTransaction(data: String): Single<String> {
         return Single.fromCallable {
-            val key = getKeyFromIndex(currentKeyIndex)
+            val key = getKeyFromIndex(walletPrefs.getCurrentWalletIndex())
             return@fromCallable signDataWithPaymentKey(key, data)
         }
         .subscribeOn(scheduler)
@@ -102,15 +96,10 @@ class HDWallet(
         }
     }
 
-    fun changeWallet(index: Int): Single<Int> {
-        return Single.fromCallable {
-            if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
-            currentKeyIndex = index
-            saveCurrentIndexToPrefs(currentKeyIndex)
-            publishCurrentWallet(currentKeyIndex)
-            return@fromCallable currentKeyIndex
-        }
-        .subscribeOn(scheduler)
+    fun changeWallet(index: Int) {
+        if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
+        saveCurrentIndexToPrefs(index)
+        publishCurrentWallet(index)
     }
 
     private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
@@ -121,7 +110,7 @@ class HDWallet(
     }
 
     fun getWalletIndex(): Single<Int> {
-        return Single.fromCallable { currentKeyIndex }
+        return Single.fromCallable { walletPrefs.getCurrentWalletIndex() }
             .subscribeOn(scheduler)
     }
 
@@ -134,7 +123,7 @@ class HDWallet(
         return Single.fromCallable {
             val bytes = TypeConverter.StringHexToByteArray(data)
             val transactionBytes = if (hash) sha3(bytes) else bytes
-            val key = getKeyFromIndex(currentKeyIndex)
+            val key = getKeyFromIndex(walletPrefs.getCurrentWalletIndex())
             return@fromCallable signWithoutMinus27(transactionBytes, key)
         }
         .subscribeOn(scheduler)

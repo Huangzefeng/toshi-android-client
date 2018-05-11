@@ -76,7 +76,7 @@ class HDWalletTest {
         )
 
         for (index in expected.indices) {
-            hdwallet.changeWallet(index).toBlocking()
+            hdwallet.changeWallet(index)
             assertThat(hdwallet.paymentAddress, `is`(expected[index]))
         }
     }

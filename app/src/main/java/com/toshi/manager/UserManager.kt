@@ -152,8 +152,7 @@ class UserManager(
 
     private fun fetchAndUpdateUser(): Completable {
         return getWallet()
-                .flatMap { it.getPaymentAddressAsync() }
-                .flatMap { recipientManager.getUserFromPaymentAddress(it) }
+                .flatMap { recipientManager.getUserFromPaymentAddress(it.paymentAddress) }
                 .doOnSuccess { updateCurrentUser(it) }
                 .doOnError { LogUtil.exception("Error while fetching user from network $it") }
                 .toCompletable()
@@ -173,8 +172,7 @@ class UserManager(
 
     private fun forceUpdateUser(): Completable {
         return getWallet()
-                .flatMap { it.getPaymentAddressAsync() }
-                .map { UserDetails(payment_address = it) }
+                .map { UserDetails(payment_address = it.paymentAddress) }
                 .flatMap { updateUser(it) }
                 .doOnSuccess { AppPrefs.setForceUserUpdate(false) }
                 .doOnError { LogUtil.exception("Error while updating user while initiating $it") }

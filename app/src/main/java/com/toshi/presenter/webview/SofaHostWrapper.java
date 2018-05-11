@@ -93,16 +93,8 @@ public class SofaHostWrapper implements SofaHostListener {
 
     @Override
     public void getAccounts(final String id) {
-        this.wallet.getPaymentAddressAsync()
-                .subscribe(
-                        paymentAddress -> createAndPostCallback(paymentAddress, id),
-                        throwable -> LogUtil.exception("Unable to get accounts", throwable)
-                );
-    }
-
-    private void createAndPostCallback(final String paymentAddress, final String id) {
-        final GetAccountsCallback callback =
-                new GetAccountsCallback().setResult(paymentAddress);
+        String paymentAddress = this.wallet.getPaymentAddress();
+        final GetAccountsCallback callback = new GetAccountsCallback().setResult(paymentAddress);
         postCallbackTask(id, callback.toJsonEncodedString());
     }
 
