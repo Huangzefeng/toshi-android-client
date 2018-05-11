@@ -54,6 +54,7 @@ class ShareWalletAddressViewModel : ViewModel() {
 
     private fun initAddressObserver(wallet: HDWallet) {
         val sub = wallet.getPaymentAddressObservable()
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { if (it != null) updatePaymentAddress(it) },

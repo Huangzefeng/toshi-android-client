@@ -25,6 +25,7 @@ import com.toshi.util.SingleLiveEvent
 import com.toshi.util.logging.LogUtil
 import com.toshi.view.BaseApplication
 import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 
 class WalletViewModel : ViewModel() {
@@ -50,6 +51,7 @@ class WalletViewModel : ViewModel() {
 
     private fun initAddressObserver(wallet: HDWallet) {
         val sub = wallet.getPaymentAddressObservable()
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         { walletAddress.value = it },

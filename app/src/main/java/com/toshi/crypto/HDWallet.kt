@@ -46,39 +46,28 @@ class HDWallet(
                     ?: throw IllegalStateException("PaymentAddress is null")
         }
 
-    val ownerAddress: String
-        get() {
-            val identityAddress = identityKey.address
-            return TypeConverter.toJsonHex(identityAddress)
-        }
-
     val name: String
         get() {
             return nameSubject.value
                     ?: throw IllegalStateException("Wallet name is null")
         }
 
-    init {
-        if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
-        val currentWalletIndex = getCurrentWalletIndex()
-        val currentPaymentAddress = addressFromIndex(currentWalletIndex)
-        val currentWalletName = getWalletNameFromIndex(currentWalletIndex)
-        paymentAddressSubject.onNext(currentPaymentAddress)
-        nameSubject.onNext(currentWalletName)
-    }
-
-    private fun addressFromIndex(index: Int): String {
-        val key = getKeyFromIndex(index)
-        return TypeConverter.toJsonHex(key.address)
-    }
-
-    private fun getKeyFromIndex(index: Int): ECKey {
-        return paymentKeys.getOrNull(index) ?: paymentKeys[0]
-    }
+    val ownerAddress: String
+        get() {
+            val identityAddress = identityKey.address
+            return TypeConverter.toJsonHex(identityAddress)
+        }
 
     fun getPaymentAddressObservable(): Observable<String> = paymentAddressSubject.asObservable()
 
     fun getWalletNameObservable(): Observable<String> = nameSubject.asObservable()
+
+    init {
+        if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
+        val currentWalletIndex = getCurrentWalletIndex()
+        publishCurrentPaymentAddress(currentWalletIndex)
+        publishCurrentWalletName(currentWalletIndex)
+    }
 
     fun signIdentity(data: String): String {
         try {
@@ -97,6 +86,8 @@ class HDWallet(
         .subscribeOn(scheduler)
     }
 
+    private fun getKeyFromIndex(index: Int): ECKey = paymentKeys.getOrNull(index) ?: paymentKeys[0]
+
     private fun signDataWithPaymentKey(paymentKey: ECKey, data: String): String {
         try {
             val transactionBytes = TypeConverter.StringHexToByteArray(data)
@@ -105,33 +96,6 @@ class HDWallet(
             LogUtil.exception("Unable to sign transaction", e)
             throw SignTransactionException("Unable to sign transaction")
         }
-    }
-
-    fun changeWallet(index: Int): Int {
-        if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
-        saveCurrentIndexToPrefs(index)
-        publishCurrentPaymentAddress(index)
-        publishCurrentWalletName(index)
-        return index
-    }
-
-    private fun publishCurrentPaymentAddress(index: Int) {
-        val address = addressFromIndex(index)
-        paymentAddressSubject.onNext(address)
-    }
-
-    private fun publishCurrentWalletName(index: Int) {
-        val name = getWalletNameFromIndex(index)
-        nameSubject.onNext(name)
-    }
-
-    private fun getWalletNameFromIndex(index: Int) = "Wallet ${index + 1}"
-
-    fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
-
-    fun getAddressesWithNames(): List<Pair<String, String>> {
-        return getAddresses()
-                .mapIndexed { index, address -> Pair(address, "Wallet ${index + 1}") }
     }
 
     fun signTransaction(data: String, hash: Boolean): Single<String> {
@@ -162,6 +126,38 @@ class HDWallet(
         System.arraycopy(privateKey, 0, encryptionKey, 32, 32)
         return encryptionKey
     }
+
+    fun changeWallet(index: Int): Int {
+        if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
+        saveCurrentIndexToPrefs(index)
+        publishCurrentPaymentAddress(index)
+        publishCurrentWalletName(index)
+        return index
+    }
+
+    private fun publishCurrentPaymentAddress(index: Int) {
+        val address = addressFromIndex(index)
+        paymentAddressSubject.onNext(address)
+    }
+
+    private fun addressFromIndex(index: Int): String {
+        val key = getKeyFromIndex(index)
+        return TypeConverter.toJsonHex(key.address)
+    }
+
+    private fun publishCurrentWalletName(index: Int) {
+        val name = getWalletNameFromIndex(index)
+        nameSubject.onNext(name)
+    }
+
+    fun getAddressesWithNames(): List<Pair<String, String>> {
+        return getAddresses()
+                .mapIndexed { index, address -> Pair(address, getWalletNameFromIndex(index)) }
+    }
+
+    fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
+
+    private fun getWalletNameFromIndex(index: Int) = "Wallet ${index + 1}"
 
     private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
 
