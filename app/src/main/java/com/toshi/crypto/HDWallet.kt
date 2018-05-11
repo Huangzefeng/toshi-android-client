@@ -53,7 +53,8 @@ class HDWallet(
 
     init {
         if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
-        paymentAddressSubject.onNext(addressFromIndex(walletPrefs.getCurrentWalletIndex()))
+        val currentPaymentAddress = addressFromIndex(getCurrentWalletIndex())
+        paymentAddressSubject.onNext(currentPaymentAddress)
     }
 
     private fun addressFromIndex(index: Int): String {
@@ -80,7 +81,7 @@ class HDWallet(
 
     fun signTransaction(data: String): Single<String> {
         return Single.fromCallable {
-            val key = getKeyFromIndex(walletPrefs.getCurrentWalletIndex())
+            val key = getKeyFromIndex(getCurrentWalletIndex())
             return@fromCallable signDataWithPaymentKey(key, data)
         }
         .subscribeOn(scheduler)
@@ -111,7 +112,7 @@ class HDWallet(
     }
 
     fun getWalletIndex(): Single<Int> {
-        return Single.fromCallable { walletPrefs.getCurrentWalletIndex() }
+        return Single.fromCallable { getCurrentWalletIndex() }
             .subscribeOn(scheduler)
     }
 
@@ -124,11 +125,13 @@ class HDWallet(
         return Single.fromCallable {
             val bytes = TypeConverter.StringHexToByteArray(data)
             val transactionBytes = if (hash) sha3(bytes) else bytes
-            val key = getKeyFromIndex(walletPrefs.getCurrentWalletIndex())
+            val key = getKeyFromIndex(getCurrentWalletIndex())
             return@fromCallable signWithoutMinus27(transactionBytes, key)
         }
         .subscribeOn(scheduler)
     }
+
+    private fun getCurrentWalletIndex() = walletPrefs.getCurrentWalletIndex()
 
     private fun sign(bytes: ByteArray, key: ECKey, doSha3Hash: Boolean = true): String {
         val msgHash = if (doSha3Hash) sha3(bytes) else bytes
