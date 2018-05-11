@@ -154,8 +154,6 @@ class HDWallet(
                 .mapIndexed { index, address -> Pair(address, getWalletNameFromIndex(index)) }
     }
 
-    fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
-
     private fun getWalletNameFromIndex(index: Int) = "Wallet ${index + 1}"
 
     @Throws(IllegalStateException::class)
@@ -169,6 +167,13 @@ class HDWallet(
     fun getCurrentWalletIndex() = walletPrefs.getCurrentWalletIndex()
 
     fun clear() = walletPrefs.clear()
+
+    fun hasAddress(paymentAddress: String): Boolean {
+        val walletAddresses = getAddresses()
+        return walletAddresses.contains(paymentAddress)
+    }
+
+    fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
 
     override fun toString(): String {
         val identityAddress = identityKey.address

@@ -147,14 +147,8 @@ public class Payment {
     }
 
     private @PaymentDirection int getPaymentDirection(final HDWallet hdWallet) {
-        if (toAddress.equals(hdWallet.getPaymentAddress())) {
-            return TO_LOCAL_USER;
-        }
-
-        if (fromAddress.equals(hdWallet.getPaymentAddress())) {
-            return FROM_LOCAL_USER;
-        }
-
+        if (hdWallet.hasAddress(toAddress)) return TO_LOCAL_USER;
+        if (hdWallet.hasAddress(fromAddress)) return FROM_LOCAL_USER;
         return NOT_RELEVANT;
     }
 
