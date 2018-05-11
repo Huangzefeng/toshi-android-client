@@ -96,10 +96,11 @@ class HDWallet(
         }
     }
 
-    fun changeWallet(index: Int) {
+    fun changeWallet(index: Int): Int {
         if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
         saveCurrentIndexToPrefs(index)
         publishCurrentWallet(index)
+        return index
     }
 
     private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)

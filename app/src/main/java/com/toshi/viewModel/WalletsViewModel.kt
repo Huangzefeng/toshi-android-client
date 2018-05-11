@@ -70,7 +70,7 @@ class WalletsViewModel(
 
     fun updateCurrentWallet(walletIndex: Int) {
         val sub = getWallet()
-                .flatMap { it.changeWallet(walletIndex) }
+                .map { it.changeWallet(walletIndex) }
                 .doOnSuccess { balanceManager.refreshBalance() }
                 .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
