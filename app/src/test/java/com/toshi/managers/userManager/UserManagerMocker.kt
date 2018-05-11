@@ -19,12 +19,17 @@
 
 package com.toshi.managers.userManager
 
+import com.toshi.crypto.HDWallet
 import com.toshi.manager.RecipientManager
 import com.toshi.manager.UserManager
 import com.toshi.manager.network.IdService
 import com.toshi.managers.baseApplication.BaseApplicationMocker
+import com.toshi.masterSeed
+import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import com.toshi.testSharedPrefs.TestAppPrefs
 import com.toshi.testSharedPrefs.TestUserPrefs
+import rx.Observable
 import rx.schedulers.Schedulers
 
 class UserManagerMocker {
@@ -38,13 +43,17 @@ class UserManagerMocker {
                 appPrefs = TestAppPrefs(),
                 baseApplication = mockBaseApplication(),
                 recipientManager = recipientManager,
+                walletObservable = mockWalletObservable(),
                 scheduler = Schedulers.trampoline()
         )
     }
 
     private fun mockBaseApplication() = BaseApplicationMocker().mock()
 
-    private fun mockIdApi(): IdService {
-        return IdServiceMocker().mock()
+    private fun mockIdApi(): IdService = IdServiceMocker().mock()
+
+    private fun mockWalletObservable(): Observable<HDWallet> {
+        val wallet = mockWallet(masterSeed)
+        return mockWalletSubject(wallet)
     }
 }

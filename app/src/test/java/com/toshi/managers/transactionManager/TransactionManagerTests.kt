@@ -20,10 +20,14 @@
 package com.toshi.managers.transactionManager
 
 import com.toshi.manager.TransactionManager
+import com.toshi.masterSeed
+import com.toshi.mockWallet
 import junit.framework.Assert.assertNotNull
+import junit.framework.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeoutException
 
 class TransactionManagerTests {
 
@@ -41,10 +45,11 @@ class TransactionManagerTests {
         val w3PaymentTask = W3PaymentTaskBuilder().createW3PaymentTask()
         try {
             transactionManager.signW3Transaction(w3PaymentTask).toBlocking().value()
-        } catch (e: IllegalStateException) {
+        } catch (e: RuntimeException) {
+            assertTrue(e.cause is TimeoutException)
             return
         }
-        fail()
+        fail("An exception is expcted to be thrown when wallet is null")
     }
 
     @Test
@@ -60,6 +65,6 @@ class TransactionManagerTests {
     }
 
     private fun initTransactionManagerWithWallet() {
-        transactionManager = transactionManagerMocker.initTransactionManagerWithWallet()
+        transactionManager = transactionManagerMocker.initTransactionManagerWithWallet(mockWallet(masterSeed))
     }
 }

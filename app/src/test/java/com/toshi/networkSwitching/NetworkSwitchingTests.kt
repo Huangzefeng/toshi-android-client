@@ -17,10 +17,12 @@
 
 package com.toshi.networkSwitching
 
+import com.toshi.crypto.HDWallet
 import com.toshi.manager.ethRegistration.EthGcmRegistration
 import com.toshi.managers.balanceManager.EthereumServiceMocker
 import com.toshi.masterSeed
 import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import com.toshi.model.local.network.Network
 import com.toshi.model.local.network.Networks
 import com.toshi.testSharedPrefs.TestAppPrefs
@@ -29,6 +31,7 @@ import com.toshi.testSharedPrefs.TestGcmToken
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
+import rx.Observable
 import rx.schedulers.Schedulers
 
 class NetworkSwitchingTests {
@@ -79,9 +82,9 @@ class NetworkSwitchingTests {
                 ethService = EthereumServiceMocker().mock(),
                 gcmPrefs = ethGcmPrefs,
                 gcmToken = TestGcmToken(),
+                walletObservable = mockWalletObservable(),
                 scheduler = Schedulers.trampoline()
         )
-        ethGcmRegistration.init(mockWallet(masterSeed))
         ethGcmRegistration.changeNetwork(mainnet).await()
     }
 
@@ -106,14 +109,15 @@ class NetworkSwitchingTests {
     private fun initWithResponseError() {
         appPrefs.clear()
         ethGcmPrefs.clear()
+        val walletObservable = mockWalletObservable()
         ethGcmRegistration = EthGcmRegistration(
                 networks = networks,
                 ethService = EthereumServiceMocker().mockWithErrorResponse(),
                 gcmPrefs = ethGcmPrefs,
                 gcmToken = TestGcmToken(),
+                walletObservable = walletObservable,
                 scheduler = Schedulers.trampoline()
         )
-        ethGcmRegistration.init(mockWallet(masterSeed))
     }
 
     private fun assertCurrentNetwork(network: Network) {
@@ -123,5 +127,10 @@ class NetworkSwitchingTests {
     private fun assertEthGcmPrefs(expectedIsMainnetRegistered: Boolean, expectedIsRopstenRegistered: Boolean) {
         assertEquals(expectedIsMainnetRegistered, ethGcmPrefs.isEthGcmTokenSentToServer(networkList[0].id))
         assertEquals(expectedIsRopstenRegistered, ethGcmPrefs.isEthGcmTokenSentToServer(networkList[1].id))
+    }
+
+    private fun mockWalletObservable(): Observable<HDWallet> {
+        val wallet = mockWallet(masterSeed)
+        return mockWalletSubject(wallet)
     }
 }

@@ -19,6 +19,7 @@
 
 package com.toshi.managers.transactionManager
 
+import com.toshi.crypto.HDWallet
 import com.toshi.manager.TransactionManager
 import com.toshi.manager.network.EthereumServiceInterface
 import com.toshi.manager.store.PendingTransactionStore
@@ -27,25 +28,33 @@ import com.toshi.manager.transaction.OutgoingTransactionManager
 import com.toshi.manager.transaction.TransactionSigner
 import com.toshi.manager.transaction.UpdateTransactionManager
 import com.toshi.managers.balanceManager.EthereumServiceMocker
-import com.toshi.masterSeed
-import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import org.mockito.Mockito
+import rx.Observable
 import rx.schedulers.Schedulers
 
 class TransactionManagerMocker {
 
-    fun initTransactionManagerWithWallet(): TransactionManager {
-        val transactionManager = initTransactionManagerWithoutWallet()
-        transactionManager.init(mockWallet(masterSeed))
+    fun initTransactionManagerWithWallet(wallet: HDWallet?): TransactionManager {
+        val transactionManager = mockTransctionManager(wallet)
+        transactionManager.init()
         return transactionManager
     }
 
     fun initTransactionManagerWithoutWallet(): TransactionManager {
+        val transactionManager = mockTransctionManager(null)
+        transactionManager.init()
+        return transactionManager
+    }
+
+    private fun mockTransctionManager(wallet: HDWallet?): TransactionManager {
         val ethService = mockEthService()
+        val walletObservable = mockWalletObservable(wallet)
         return TransactionManager(
                 ethService = ethService,
+                walletObservable = walletObservable,
                 pendingTransactionStore = PendingTransactionStore(),
-                transactionSigner = TransactionSigner(ethService),
+                transactionSigner = TransactionSigner(ethService, walletObservable),
                 incomingTransactionManager = mockIncomingTransactionManager(),
                 outgoingTransactionManager = mockOutgoingTransactionManager(),
                 updateTransactionManager = mockUpdateTransactionManager(),
@@ -68,4 +77,6 @@ class TransactionManagerMocker {
     private fun mockUpdateTransactionManager(): UpdateTransactionManager {
         return Mockito.mock(UpdateTransactionManager::class.java)
     }
+
+    private fun mockWalletObservable(wallet: HDWallet?): Observable<HDWallet> = mockWalletSubject(wallet)
 }

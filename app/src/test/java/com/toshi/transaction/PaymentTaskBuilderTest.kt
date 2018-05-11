@@ -17,6 +17,7 @@
 
 package com.toshi.transaction
 
+import com.toshi.crypto.HDWallet
 import com.toshi.crypto.util.TypeConverter
 import com.toshi.extensions.createSafeBigDecimal
 import com.toshi.manager.BalanceManager
@@ -29,6 +30,9 @@ import com.toshi.manager.model.W3PaymentTask
 import com.toshi.manager.network.EthereumServiceInterface
 import com.toshi.managers.balanceManager.BalanceManagerMocker
 import com.toshi.managers.balanceManager.EthereumServiceMocker
+import com.toshi.masterSeed
+import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import com.toshi.model.local.UnsignedW3Transaction
 import com.toshi.model.local.User
 import com.toshi.model.network.ExchangeRate
@@ -42,6 +46,7 @@ import org.hamcrest.Matchers.notNullValue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
+import rx.Observable
 import rx.Single
 import rx.schedulers.Schedulers
 import java.math.BigDecimal
@@ -127,12 +132,18 @@ class PaymentTaskBuilderTest {
     private fun mockTransactionManager() {
         transactionManager = TransactionManager(
                 ethService = mockEthereumService(),
+                walletObservable = mockWalletObservable(),
                 scheduler = Schedulers.trampoline()
         )
     }
 
     private fun mockEthereumService(): EthereumServiceInterface {
         return EthereumServiceMocker().mockCreateTransaction(unsignedTransaction)
+    }
+
+    private fun mockWalletObservable(): Observable<HDWallet> {
+        val wallet = mockWallet(masterSeed)
+        return mockWalletSubject(wallet)
     }
 
     private fun mockRecipientManager() {

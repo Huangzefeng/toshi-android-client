@@ -23,6 +23,7 @@ import com.toshi.manager.network.EthereumServiceInterface
 import com.toshi.masterSeed
 import com.toshi.mockNetwork
 import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import com.toshi.network
 import com.toshi.testSharedPrefs.TestAppPrefs
 import com.toshi.testSharedPrefs.TestEthGcmPrefs
@@ -32,9 +33,11 @@ import com.toshi.util.sharedPrefs.AppPrefsInterface
 import com.toshi.util.sharedPrefs.EthGcmPrefsInterface
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import rx.schedulers.Schedulers
+import java.util.concurrent.TimeoutException
 
 class EthGcmRegistrationTests {
 
@@ -58,44 +61,29 @@ class EthGcmRegistrationTests {
         wallet = mockWallet(masterSeed)
     }
 
-    private fun mockEthService(): EthereumServiceInterface {
-        return EthereumServiceMocker().mock()
-    }
-
-    private fun createEthGcmRegistration(gcmPrefs: EthGcmPrefsInterface,
-                                         ethService: EthereumServiceInterface,
-                                         gcmToken: GcmTokenInterface): EthGcmRegistration {
-        val networks = mockNetwork(network)
-        return EthGcmRegistration(
-                networks = networks,
-                gcmPrefs = gcmPrefs,
-                ethService = ethService,
-                gcmToken = gcmToken,
-                scheduler = Schedulers.trampoline()
-        )
-    }
+    private fun mockEthService(): EthereumServiceInterface = EthereumServiceMocker().mock()
 
     @Test
     fun `register before wallet is set`() {
-        initEthGcmRegistration()
+        initEthGcmRegistration(null)
         try {
             ethGcmRegistration.forceRegisterEthGcm().await()
-        } catch (e: IllegalStateException) {
-            assertTrue(true)
+        } catch (e: RuntimeException) {
+            assertTrue(e.cause is TimeoutException)
             val isEthGcmTokenSentToServer = gcmPrefs.isEthGcmTokenSentToServer(network.id)
             assertFalse(isEthGcmTokenSentToServer)
             return
         }
-        assertTrue(false)
+        fail("An exception should have been thrown here")
     }
 
     @Test
     fun `register after wallet is set`() {
-        initEthGcmRegistrationWitWallet(wallet)
+        initEthGcmRegistration(wallet)
         try {
             ethGcmRegistration.forceRegisterEthGcm().await()
         } catch (e: IllegalStateException) {
-            assertTrue(false)
+            fail("No exception should be thrown when registering")
             return
         }
         val isEthGcmTokenSentToServer = gcmPrefs.isEthGcmTokenSentToServer(network.id)
@@ -104,12 +92,12 @@ class EthGcmRegistrationTests {
 
     @Test
     fun unregisterGcm() {
-        initEthGcmRegistrationWitWallet(wallet)
+        initEthGcmRegistration(wallet)
         val token = gcmToken.get().toBlocking().value()
         try {
             ethGcmRegistration.unregisterFromEthGcm(token).await()
         } catch (e: IllegalStateException) {
-            assertTrue(false)
+            fail("No exception should be thrown when unregistering")
             return
         }
         val isEthGcmTokenSentToServer = gcmPrefs.isEthGcmTokenSentToServer(network.id)
@@ -118,21 +106,32 @@ class EthGcmRegistrationTests {
 
     @Test
     fun clearPrefs() {
-        initEthGcmRegistrationWitWallet(wallet)
+        initEthGcmRegistration(wallet)
         gcmPrefs.setEthGcmTokenSentToServer(network.id, true)
         assertTrue(gcmPrefs.isEthGcmTokenSentToServer(network.id))
         ethGcmRegistration.clear()
         assertFalse(gcmPrefs.isEthGcmTokenSentToServer(network.id))
     }
 
-    private fun initEthGcmRegistrationWitWallet(wallet: HDWallet) {
-        initEthGcmRegistration()
-        ethGcmRegistration.init(wallet)
-    }
-
-    private fun initEthGcmRegistration() {
+    private fun initEthGcmRegistration(wallet: HDWallet?) {
         appPrefs.clear()
         gcmPrefs.clear()
-        ethGcmRegistration = createEthGcmRegistration(gcmPrefs, ethService, gcmToken)
+        ethGcmRegistration = createEthGcmRegistration(wallet, gcmPrefs, ethService, gcmToken)
+    }
+
+    private fun createEthGcmRegistration(wallet: HDWallet?,
+                                         gcmPrefs: EthGcmPrefsInterface,
+                                         ethService: EthereumServiceInterface,
+                                         gcmToken: GcmTokenInterface): EthGcmRegistration {
+        val networks = mockNetwork(network)
+        val walletObservable = mockWalletSubject(wallet)
+        return EthGcmRegistration(
+                networks = networks,
+                gcmPrefs = gcmPrefs,
+                ethService = ethService,
+                gcmToken = gcmToken,
+                walletObservable = walletObservable,
+                scheduler = Schedulers.trampoline()
+        )
     }
 }

@@ -19,6 +19,7 @@ package com.toshi.managers.toshiManager
 
 import android.content.Context
 import com.toshi.any
+import com.toshi.crypto.HDWallet
 import com.toshi.crypto.HdWalletBuilder
 import com.toshi.exception.InvalidMasterSeedException
 import com.toshi.invalidMasterSeed
@@ -36,6 +37,8 @@ import com.toshi.managers.recipientManager.RecipientManagerMocker
 import com.toshi.managers.transactionManager.TransactionManagerMocker
 import com.toshi.managers.userManager.UserManagerMocker
 import com.toshi.masterSeed
+import com.toshi.mockWallet
+import com.toshi.mockWalletSubject
 import com.toshi.testSharedPrefs.TestAppPrefs
 import com.toshi.testSharedPrefs.TestWalletPrefs
 import junit.framework.Assert.assertEquals
@@ -45,6 +48,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
 import rx.Completable
+import rx.Observable
 import rx.schedulers.Schedulers
 
 class ToshiManagerTests {
@@ -61,16 +65,18 @@ class ToshiManagerTests {
         val userManager = mockUserManager(recipientManager)
         val baseApplication = mockBaseApplication()
         val sofaMessageManager = mockSofaMessageManager()
+        val wallet = mockWallet(masterSeed)
         walletPrefs = TestWalletPrefs()
         hdWalletBuilder = HdWalletBuilder(walletPrefs = walletPrefs, context = context)
         appPrefs = TestAppPrefs()
 
         toshiManager = ToshiManager(
                 balanceManager = mockBalanceManager(),
-                transactionManager = mockTransactionManager(),
+                transactionManager = mockTransactionManager(wallet),
                 recipientManager = recipientManager,
                 userManager = userManager,
                 chatManager = mockChatManager(
+                        wallet = wallet,
                         userManager = userManager,
                         recipientManager = recipientManager,
                         sofaMessageManager = sofaMessageManager
@@ -86,17 +92,19 @@ class ToshiManagerTests {
 
     private fun mockBalanceManager() = BalanceManagerMocker().mock()
 
-    private fun mockTransactionManager(): TransactionManager {
-        return TransactionManagerMocker().initTransactionManagerWithoutWallet()
+    private fun mockTransactionManager(wallet: HDWallet): TransactionManager {
+        return TransactionManagerMocker().initTransactionManagerWithWallet(wallet)
     }
 
-    private fun mockChatManager(userManager: UserManager,
+    private fun mockChatManager(wallet: HDWallet,
+                                userManager: UserManager,
                                 recipientManager: RecipientManager,
                                 sofaMessageManager: SofaMessageManager): ChatManager {
         return ChatManager(
                 userManager = userManager,
                 recipientManager = recipientManager,
                 sofaMessageManager = sofaMessageManager,
+                walletObservable = mockWalletObservable(wallet),
                 scheduler = Schedulers.trampoline()
         )
     }
@@ -119,6 +127,8 @@ class ToshiManagerTests {
                 .thenReturn(Completable.complete())
         return sofaMessageManager
     }
+
+    private fun mockWalletObservable(wallet: HDWallet): Observable<HDWallet> = mockWalletSubject(wallet)
 
     @Test
     fun `init app with null passphrase`() {
