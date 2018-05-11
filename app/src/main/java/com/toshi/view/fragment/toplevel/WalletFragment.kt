@@ -19,6 +19,9 @@ package com.toshi.view.fragment.toplevel
 
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.FragmentActivity
 import android.view.LayoutInflater
@@ -27,12 +30,16 @@ import android.view.ViewGroup
 import com.toshi.R
 import com.toshi.extensions.getColorById
 import com.toshi.extensions.toast
-import com.toshi.util.ImageUtil
 import com.toshi.view.adapter.WalletPagerAdapter
 import com.toshi.view.fragment.RefreshFragment
 import com.toshi.view.fragment.dialogFragment.ShareWalletAddressDialog
 import com.toshi.viewModel.WalletViewModel
-import kotlinx.android.synthetic.main.fragment_wallet.*
+import kotlinx.android.synthetic.main.fragment_wallet.copy
+import kotlinx.android.synthetic.main.fragment_wallet.refreshLayout
+import kotlinx.android.synthetic.main.fragment_wallet.tabLayout
+import kotlinx.android.synthetic.main.fragment_wallet.viewPager
+import kotlinx.android.synthetic.main.fragment_wallet.walletAddress
+import kotlinx.android.synthetic.main.fragment_wallet.walletWrapper
 
 class WalletFragment : TopLevelFragment() {
     companion object {
@@ -72,12 +79,21 @@ class WalletFragment : TopLevelFragment() {
     private fun initNetworkView() = getMainActivity()?.showNetworkStatusView()
 
     private fun initClickListeners() {
-        receive.setOnClickListener { showShareWalletDialog() }
+        copy.setOnClickListener { handleCopyToClipboardClicked() }
+        walletWrapper.setOnClickListener { showShareWalletDialog() }
     }
 
     private fun showShareWalletDialog() {
         val dialog = ShareWalletAddressDialog.newInstance()
         dialog.show(activity?.supportFragmentManager, ShareWalletAddressDialog.TAG)
+    }
+
+    private fun handleCopyToClipboardClicked() {
+        val walletAddress = viewModel.walletAddress.value ?: return
+        val clipboard = activity?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+        val clip = ClipData.newPlainText(getString(R.string.payment_address), walletAddress)
+        clipboard?.primaryClip = clip
+        toast(R.string.copied_to_clipboard)
     }
 
     private fun initAdapter() {
@@ -103,20 +119,11 @@ class WalletFragment : TopLevelFragment() {
 
     private fun initObservers() {
         viewModel.walletAddress.observe(this, Observer {
-            if (it != null) handleWalletAddress(it)
+            if (it != null) walletAddress.setCollapsedText(it)
         })
         viewModel.error.observe(this, Observer {
             if (it != null) toast(it)
         })
-    }
-
-    private fun handleWalletAddress(paymentAddress: String) {
-        walletAddress.setCollapsedText(paymentAddress)
-        setWalletAvatar(paymentAddress)
-    }
-
-    private fun setWalletAvatar(paymentAddress: String) {
-        ImageUtil.loadIdenticon(paymentAddress, avatar)
     }
 
     fun stopRefreshing() {
