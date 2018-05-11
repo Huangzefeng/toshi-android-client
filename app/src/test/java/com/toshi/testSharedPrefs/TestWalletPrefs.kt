@@ -32,5 +32,14 @@ class TestWalletPrefs : WalletPrefsInterface {
         prefs[MASTER_SEED] = masterSeed
     }
 
+    override fun getCurrentWalletIndex(): Int {
+        return if (!prefs.containsKey(WalletPrefsInterface.WALLET_INDEX)) 0
+        else prefs[WalletPrefsInterface.WALLET_INDEX] as? Int ?: 0
+    }
+
+    override fun setCurrentWalletIndex(index: Int) {
+        prefs[WalletPrefsInterface.WALLET_INDEX] = index
+    }
+
     override fun clear() = prefs.clear()
 }
