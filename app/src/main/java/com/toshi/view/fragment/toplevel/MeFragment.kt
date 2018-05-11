@@ -55,6 +55,7 @@ import kotlinx.android.synthetic.main.fragment_me.avatar
 import kotlinx.android.synthetic.main.fragment_me.backupPhrase
 import kotlinx.android.synthetic.main.fragment_me.checkboxBackupPhrase
 import kotlinx.android.synthetic.main.fragment_me.currentNetwork
+import kotlinx.android.synthetic.main.fragment_me.currentWallet
 import kotlinx.android.synthetic.main.fragment_me.myProfileCard
 import kotlinx.android.synthetic.main.fragment_me.name
 import kotlinx.android.synthetic.main.fragment_me.network
@@ -156,11 +157,14 @@ class MeFragment : TopLevelFragment() {
         viewModel.user.observe(this, Observer {
             user -> user?.let { updateUi(it) } ?: handleNoUser()
         })
-        viewModel.singelBalance.observe(this, Observer {
+        viewModel.singleBalance.observe(this, Observer {
             balance -> balance?.let { showDialog(it) }
         })
         viewModel.currentNetwork.observe(this, Observer {
             if (it != network) currentNetwork.text = it?.name
+        })
+        viewModel.currentWallet.observe(this, Observer {
+            if (it != null) currentWallet.text = it.name
         })
     }
 

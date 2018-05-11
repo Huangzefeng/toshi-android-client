@@ -51,6 +51,12 @@ class HDWallet(
             return TypeConverter.toJsonHex(identityAddress)
         }
 
+    val name: String
+        get() {
+            val index = getCurrentWalletIndex()
+            return "Wallet ${index + 1}"
+        }
+
     init {
         if (paymentKeys.isEmpty()) throw InvalidKeySetException("No payment keys in list")
         val currentPaymentAddress = addressFromIndex(getCurrentWalletIndex())
@@ -116,9 +122,11 @@ class HDWallet(
             .subscribeOn(scheduler)
     }
 
-    fun getAddresses(): Single<List<String>> {
-        return Single.fromCallable { paymentKeys.map { TypeConverter.toJsonHex(it.address) } }
-            .subscribeOn(scheduler)
+    fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
+
+    fun getAddressesWithNames(): List<Pair<String, String>> {
+        return getAddresses()
+                .mapIndexed { index, address -> Pair(address, "Wallet ${index + 1}") }
     }
 
     fun signTransaction(data: String, hash: Boolean): Single<String> {

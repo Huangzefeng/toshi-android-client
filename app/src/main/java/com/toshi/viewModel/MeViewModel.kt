@@ -19,6 +19,10 @@ package com.toshi.viewModel
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import com.toshi.crypto.HDWallet
+import com.toshi.manager.BalanceManager
+import com.toshi.manager.ToshiManager
+import com.toshi.manager.UserManager
 import com.toshi.model.local.User
 import com.toshi.model.local.network.Network
 import com.toshi.model.local.network.Networks
@@ -32,31 +36,47 @@ import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 
 class MeViewModel(
-        private val subsribeScheduler: Scheduler = Schedulers.io(),
+        private val baseApplication: BaseApplication = BaseApplication.get(),
+        private val toshiManager: ToshiManager = baseApplication.toshiManager,
+        private val userManager: UserManager = baseApplication.userManager,
+        private val balanceManager: BalanceManager = baseApplication.balanceManager,
+        private val subscribeScheduler: Scheduler = Schedulers.io(),
         private val observeScheduler: Scheduler = AndroidSchedulers.mainThread()
 ) : ViewModel() {
 
     private val subscriptions by lazy { CompositeSubscription() }
-    private val userManager by lazy { BaseApplication.get().userManager }
-    private val balanceManager by lazy { BaseApplication.get().balanceManager }
 
     val user by lazy { MutableLiveData<User>() }
-    val singelBalance by lazy { SingleLiveEvent<Balance>() }
+    val singleBalance by lazy { SingleLiveEvent<Balance>() }
+    val currentWallet by lazy { MutableLiveData<HDWallet>() }
     val currentNetwork by lazy { MutableLiveData<Network>() }
 
     init {
         fetchUser()
         getCurrentNetwork()
+        getCurrentWallet()
     }
-
     private fun fetchUser() {
         val sub = userManager
                 .getCurrentUserObservable()
-                .subscribeOn(subsribeScheduler)
+                .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
                         { user.value = it },
-                        { LogUtil.exception("Error during fetching user $it") }
+                        { LogUtil.exception("Error when fetching user $it") }
+                )
+
+        subscriptions.add(sub)
+    }
+
+    private fun getCurrentWallet() {
+        val sub = toshiManager
+                .getWallet()
+                .subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler)
+                .subscribe(
+                        { currentWallet.value = it },
+                        { LogUtil.exception("Error when fetching wallet $it") }
                 )
 
         subscriptions.add(sub)
@@ -67,10 +87,10 @@ class MeViewModel(
                 .balanceObservable
                 .first()
                 .toSingle()
-                .subscribeOn(subsribeScheduler)
+                .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
-                        { singelBalance.value = it },
+                        { singleBalance.value = it },
                         { LogUtil.exception("Error showing dialog $it") }
                 )
 
@@ -80,7 +100,7 @@ class MeViewModel(
     private fun getCurrentNetwork() {
         val sub = Networks.getInstance()
                 .networkObservable
-                .subscribeOn(subsribeScheduler)
+                .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
                         { currentNetwork.value = it },

@@ -238,7 +238,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="@dimen/text_size_subtitle"
                         android:textColor="@color/textColorSecondary"
-                        tools:text="Primary"/>
+                        tools:text="Wallet1"/>
 
                     <android.support.v4.widget.Space
                         android:layout_width="@dimen/margin_one_and_a_quarter"

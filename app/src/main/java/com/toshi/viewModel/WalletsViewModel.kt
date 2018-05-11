@@ -50,22 +50,16 @@ class WalletsViewModel(
 
     private fun getWallets() {
         val sub = getWallet()
-                .flatMap { it.getAddresses() }
-                .map { toWallet(it) }
+                .map { it.getAddressesWithNames() }
+                .map { it.map { Wallet(paymentAddress = it.first, name = it.second) } }
                 .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
-                        { wallets.postValue(it) },
+                        { wallets.value = it },
                         { LogUtil.exception("Could not load wallet addresses", it) }
                 )
 
         subscriptions.add(sub)
-    }
-
-    private fun toWallet(list: List<String>): List<Wallet> {
-        return list.mapIndexed { index, address ->
-            return@mapIndexed Wallet("Wallet${index + 1}", address)
-        }
     }
 
     fun updateCurrentWallet(walletIndex: Int) {

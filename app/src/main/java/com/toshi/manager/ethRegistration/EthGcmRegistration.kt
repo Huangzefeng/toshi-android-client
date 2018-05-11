@@ -111,10 +111,10 @@ class EthGcmRegistration(
     }
 
     private fun registerGcm(serverTime: Long, token: String?): Completable {
-        return wallet.getAddresses()
-                .flatMapCompletable {
-                    ethService.get().registerGcm(serverTime, GcmRegistration(token, it))
-                }
+        val addresses = wallet.getAddresses()
+        return ethService
+                .get()
+                .registerGcm(serverTime, GcmRegistration(token, addresses))
     }
 
     private fun updateCurrentNetwork(network: Network) {
