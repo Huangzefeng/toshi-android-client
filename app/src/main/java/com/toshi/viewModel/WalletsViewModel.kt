@@ -19,45 +19,80 @@ package com.toshi.viewModel
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import com.toshi.crypto.HDWallet
+import com.toshi.manager.ToshiManager
+import com.toshi.util.SingleLiveEvent
 import com.toshi.util.logging.LogUtil
 import com.toshi.view.BaseApplication
+import rx.Scheduler
 import rx.Single
 import rx.android.schedulers.AndroidSchedulers
+import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 
-class WalletsViewModel : ViewModel() {
+class WalletsViewModel(
+        private val baseApplication: BaseApplication = BaseApplication.get(),
+        private val toshiManager: ToshiManager = baseApplication.toshiManager,
+        private val subscribeScheduler: Scheduler = Schedulers.io(),
+        private val observeScheduler: Scheduler = AndroidSchedulers.mainThread()
+) : ViewModel() {
 
     val subscriptions by lazy { CompositeSubscription() }
     val wallets by lazy { MutableLiveData<List<Wallet>>() }
+    val walletIndex by lazy { SingleLiveEvent<Int>() }
+    val walletChanged by lazy { SingleLiveEvent<Int>() }
 
     init {
         getWallets()
     }
 
     private fun getWallets() {
-        val sub = BaseApplication.get().toshiManager
-                .getWallet()
+        val sub = getWallet()
                 .flatMap { it.getAddresses() }
-                .flatMap { toWallet(it) }
-                .subscribeOn(AndroidSchedulers.mainThread())
+                .map { toWallet(it) }
+                .subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler)
                 .subscribe(
-                        {
-                            LogUtil.d("got wallet list!")
-                            this.wallets.postValue(it)
-                        },
+                        { wallets.postValue(it) },
                         { LogUtil.exception("Could not load wallet addresses", it) }
                 )
 
         subscriptions.add(sub)
     }
 
-    private fun toWallet(list: List<String>): Single<List<Wallet>> {
-        return Single.fromCallable {
-            return@fromCallable list.mapIndexed { index, address ->
-                return@mapIndexed Wallet("Wallet${index + 1}", address)
-            }
+    private fun toWallet(list: List<String>): List<Wallet> {
+        return list.mapIndexed { index, address ->
+            return@mapIndexed Wallet("Wallet${index + 1}", address)
         }
     }
+
+    fun setCurrentWallet(walletIndex: Int) {
+        val sub = getWallet()
+                .flatMap { it.changeWallet(walletIndex) }
+                .subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler)
+                .subscribe(
+                        { walletChanged.value = it },
+                        { LogUtil.exception("Could not change wallet", it) }
+                )
+
+        subscriptions.add(sub)
+    }
+
+    fun getWalletIndex() {
+        val sub = getWallet()
+                .flatMap { it.getWalletIndex() }
+                .subscribeOn(subscribeScheduler)
+                .observeOn(observeScheduler)
+                .subscribe(
+                        { walletIndex.value = it },
+                        { LogUtil.exception("Could not update wallet adapter", it) }
+                )
+
+        subscriptions.add(sub)
+    }
+
+    private fun getWallet() : Single<HDWallet> = toshiManager.getWallet()
 
     override fun onCleared() {
         subscriptions.clear()

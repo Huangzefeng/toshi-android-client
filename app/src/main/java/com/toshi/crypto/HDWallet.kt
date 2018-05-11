@@ -102,18 +102,26 @@ class HDWallet(
         }
     }
 
-    fun changeWallet(index: Int): Single<Boolean> {
+    fun changeWallet(index: Int): Single<Int> {
         return Single.fromCallable {
-            if (paymentKeys.size <= index) return@fromCallable false
-            walletPrefs.setCurrentWalletIndex(index)
+            if (paymentKeys.size <= index) throw IllegalStateException("Index is bigger than paymentKeys size")
             currentKeyIndex = index
-            paymentAddressSubject.onNext(addressFromIndex(index))
-            return@fromCallable true
+            saveCurrentIndexToPrefs(currentKeyIndex)
+            publishCurrentWallet(currentKeyIndex)
+            return@fromCallable currentKeyIndex
         }
+        .subscribeOn(scheduler)
+    }
+
+    private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
+
+    private fun publishCurrentWallet(index: Int) {
+        val address = addressFromIndex(index)
+        paymentAddressSubject.onNext(address)
     }
 
     fun getWalletIndex(): Single<Int> {
-        return Single.fromCallable {  currentKeyIndex }
+        return Single.fromCallable { currentKeyIndex }
             .subscribeOn(scheduler)
     }
 

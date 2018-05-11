@@ -36,8 +36,13 @@ class WalletAdapter(
     fun setItems(wallets: List<Wallet>, selectedWalletIndex: Int) {
         this.wallets.clear()
         this.wallets.addAll(wallets)
-        currentSelectedItem = selectedWalletIndex
-        this.notifyDataSetChanged()
+        setInitialSelectedNetwork(selectedWalletIndex)
+        notifyDataSetChanged()
+    }
+
+    private fun setInitialSelectedNetwork(currentWalletIndex: Int) {
+        currentSelectedItem = currentWalletIndex
+        previousSelectedItem = currentWalletIndex
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WalletViewHolder {
@@ -51,15 +56,15 @@ class WalletAdapter(
         holder.apply {
             setWallet(wallet)
             if (isSelected) setSelected() else setUnselected()
-            setOnItemClickedListener(position) { handleSelectedItem(it) }
+            setOnItemClickedListener(position) { onItemClickedListener.invoke(it) }
         }
     }
 
-    private fun handleSelectedItem(position: Int) {
+    fun handleSelectedItem(walletIndex: Int) {
         previousSelectedItem = currentSelectedItem
-        currentSelectedItem = position
-        onItemClickedListener(position)
+        currentSelectedItem = walletIndex
         notifyItemChanged(previousSelectedItem)
+        notifyItemChanged(currentSelectedItem)
     }
 
     override fun getItemCount(): Int = wallets.size
