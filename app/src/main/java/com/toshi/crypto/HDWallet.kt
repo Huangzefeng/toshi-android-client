@@ -110,16 +110,9 @@ class HDWallet(
         return index
     }
 
-    private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
-
     private fun publishCurrentWallet(index: Int) {
         val address = addressFromIndex(index)
         paymentAddressSubject.onNext(address)
-    }
-
-    fun getWalletIndex(): Single<Int> {
-        return Single.fromCallable { getCurrentWalletIndex() }
-            .subscribeOn(scheduler)
     }
 
     fun getAddresses(): List<String> = paymentKeys.map { TypeConverter.toJsonHex(it.address) }
@@ -138,8 +131,6 @@ class HDWallet(
         }
         .subscribeOn(scheduler)
     }
-
-    private fun getCurrentWalletIndex() = walletPrefs.getCurrentWalletIndex()
 
     private fun sign(bytes: ByteArray, key: ECKey, doSha3Hash: Boolean = true): String {
         val msgHash = if (doSha3Hash) sha3(bytes) else bytes
@@ -160,9 +151,11 @@ class HDWallet(
         return encryptionKey
     }
 
-    fun clear() {
-        walletPrefs.clear()
-    }
+    private fun saveCurrentIndexToPrefs(index: Int) = walletPrefs.setCurrentWalletIndex(index)
+
+    fun getCurrentWalletIndex() = walletPrefs.getCurrentWalletIndex()
+
+    fun clear() = walletPrefs.clear()
 
     override fun toString(): String {
         val identityAddress = identityKey.address

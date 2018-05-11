@@ -78,7 +78,7 @@ class WalletsViewModel(
 
     fun getWalletIndex() {
         val sub = getWallet()
-                .flatMap { it.getWalletIndex() }
+                .map { it.getCurrentWalletIndex() }
                 .subscribeOn(subscribeScheduler)
                 .observeOn(observeScheduler)
                 .subscribe(
