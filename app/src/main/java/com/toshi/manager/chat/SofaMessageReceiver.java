@@ -68,7 +68,7 @@ public class SofaMessageReceiver {
 
     private final ProtocolStore protocolStore;
     private final SignalServiceMessageReceiver messageReceiver;
-    private final HDWallet wallet;
+    private final String ownerAddress;
     private final GroupUpdateTask taskGroupUpdate;
     private final HandleMessageTask taskHandleMessage;
 
@@ -77,23 +77,24 @@ public class SofaMessageReceiver {
     private Subscription messagesSubscription;
     private final ExecutorService messageReceiverThread = Executors.newSingleThreadExecutor();
 
-    public SofaMessageReceiver(@NonNull final HDWallet wallet,
+    public SofaMessageReceiver(@NonNull final String ownerAddress,
+                               @NonNull final Observable<HDWallet> hdWalletObservable,
                                @NonNull final ProtocolStore protocolStore,
                                @NonNull final ConversationStore conversationStore,
                                @NonNull final SignalServiceUrl[] urls,
                                @NonNull final SofaMessageSender messageSender) {
-        this.wallet = wallet;
         this.protocolStore = protocolStore;
+        this.ownerAddress = ownerAddress;
         this.messageReceiver =
                 new SignalServiceMessageReceiver(
                         new SignalServiceConfiguration(urls, new SignalCdnUrl[0]),
-                        this.wallet.getOwnerAddress(),
+                        this.ownerAddress,
                         this.protocolStore.getPassword(),
                         this.protocolStore.getSignalingKey(),
                         USER_AGENT);
 
         this.taskGroupUpdate = new GroupUpdateTask(this.messageReceiver, messageSender, conversationStore);
-        this.taskHandleMessage = new HandleMessageTask(this.messageReceiver, conversationStore, this.wallet, messageSender);
+        this.taskHandleMessage = new HandleMessageTask(this.messageReceiver, conversationStore, hdWalletObservable, messageSender);
     }
 
     public void receiveMessagesAsync() {
@@ -152,7 +153,7 @@ public class SofaMessageReceiver {
     }
 
     private IncomingMessage handleIncomingSofaMessage(final SignalServiceEnvelope envelope) throws InvalidVersionException, InvalidMessageException, InvalidKeyException, DuplicateMessageException, InvalidKeyIdException, org.whispersystems.libsignal.UntrustedIdentityException, LegacyMessageException, NoSessionException {
-        final SignalServiceAddress localAddress = new SignalServiceAddress(this.wallet.getOwnerAddress());
+        final SignalServiceAddress localAddress = new SignalServiceAddress(this.ownerAddress);
         final SignalServiceCipher cipher = new SignalServiceCipher(localAddress, this.protocolStore);
         final SignalServiceContent content = cipher.decrypt(envelope);
         final String messageSource = envelope.getSource();

@@ -19,13 +19,12 @@ package com.toshi.crypto.signal;
 
 
 import com.squareup.moshi.Moshi;
-import com.toshi.crypto.HDWallet;
 import com.toshi.crypto.signal.model.SignalBootstrap;
 import com.toshi.crypto.signal.network.ChatInterface;
 import com.toshi.crypto.signal.store.ProtocolStore;
+import com.toshi.manager.network.interceptor.AppInfoUserAgentInterceptor;
 import com.toshi.manager.network.interceptor.LoggingInterceptor;
 import com.toshi.manager.network.interceptor.SigningInterceptor;
-import com.toshi.manager.network.interceptor.AppInfoUserAgentInterceptor;
 import com.toshi.util.logging.LogUtil;
 
 import org.whispersystems.libsignal.IdentityKey;
@@ -62,14 +61,10 @@ public final class ChatService extends SignalServiceAccountManager {
 
     public ChatService(
             final SignalServiceUrl[] urls,
-            final HDWallet wallet,
+            final String ownerAddress,
             final ProtocolStore protocolStore,
             final String userAgent) {
-
-        this(   urls,
-                wallet.getOwnerAddress(),
-                protocolStore.getPassword(),
-                userAgent);
+        this(urls, ownerAddress, protocolStore.getPassword(), userAgent);
     }
 
     private ChatService(final SignalServiceUrl[] urls,

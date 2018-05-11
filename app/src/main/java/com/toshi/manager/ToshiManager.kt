@@ -20,6 +20,7 @@ package com.toshi.manager
 import com.toshi.R
 import com.toshi.crypto.HDWallet
 import com.toshi.crypto.HdWalletBuilder
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.extensions.toast
 import com.toshi.manager.store.DbMigration
 import com.toshi.util.ImageUtil
@@ -40,11 +41,12 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 class ToshiManager(
-        val balanceManager: BalanceManager = BalanceManager(),
-        val transactionManager: TransactionManager = TransactionManager(),
+        private val walletSubject: BehaviorSubject<HDWallet> = BehaviorSubject.create<HDWallet>(),
+        val balanceManager: BalanceManager = BalanceManager(walletObservable = walletSubject.asObservable()),
+        val transactionManager: TransactionManager = TransactionManager(walletObservable = walletSubject.asObservable()),
         val recipientManager: RecipientManager = RecipientManager(),
-        val userManager: UserManager = UserManager(recipientManager = recipientManager),
-        val chatManager: ChatManager = ChatManager(userManager = userManager, recipientManager = recipientManager),
+        val userManager: UserManager = UserManager(recipientManager = recipientManager, walletObservable = walletSubject.asObservable()),
+        val chatManager: ChatManager = ChatManager(userManager = userManager, recipientManager = recipientManager, walletObservable = walletSubject.asObservable()),
         val reputationManager: ReputationManager = ReputationManager(),
         val dappManager: DappManager = DappManager(),
         private val baseApplication: BaseApplication = BaseApplication.get(),
@@ -53,8 +55,6 @@ class ToshiManager(
         private val signalPrefs: SignalPrefsInterface = SignalPrefs,
         private val scheduler: Scheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 ) {
-
-    private val walletSubject = BehaviorSubject.create<HDWallet>()
 
     private var areManagersInitialised = false
     private var realmConfig: RealmConfiguration? = null
@@ -133,11 +133,11 @@ class ToshiManager(
         return if (areManagersInitialised) Completable.complete()
         else Completable.fromAction {
             initRealm(wallet)
-            transactionManager.init(wallet)
+            transactionManager.init()
         }
         .onErrorComplete()
         .andThen(Completable.mergeDelayError(
-                balanceManager.init(wallet),
+                balanceManager.init(),
                 chatManager.init(wallet),
                 userManager.init(wallet)
         ))
@@ -168,12 +168,8 @@ class ToshiManager(
 
     fun getWallet(): Single<HDWallet> {
         return walletSubject
-                .filter { wallet != null }
-                .first()
-                .toSingle()
-                .timeout(30, TimeUnit.SECONDS)
-                .doOnError { LogUtil.exception("Wallet is null", it) }
-                .onErrorReturn { null }
+                .getTimeoutSingle()
+                .subscribeOn(scheduler)
     }
 
     fun signOut() {

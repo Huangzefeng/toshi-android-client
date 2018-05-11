@@ -40,6 +40,7 @@ import com.toshi.util.sharedPrefs.SignalPrefs
 import com.toshi.view.BaseApplication
 import org.whispersystems.signalservice.internal.configuration.SignalServiceUrl
 import rx.Completable
+import rx.Observable
 import rx.Scheduler
 import rx.Single
 import rx.Subscription
@@ -54,11 +55,11 @@ class SofaMessageManager(
         private val signalServiceUrl: SignalServiceUrl = SignalServiceUrl(baseApplication.getString(R.string.chat_url), trustStore),
         private val signalServiceUrls: Array<SignalServiceUrl> = Array(1, { signalServiceUrl }),
         private val signalPrefs: SignalPrefs = SignalPrefs,
+        private val walletObservable: Observable<HDWallet>,
         private val userAgent: String = "Android " + BuildConfig.APPLICATION_ID + " - " + BuildConfig.VERSION_NAME + ":" + BuildConfig.VERSION_CODE,
         private val scheduler: Scheduler = Schedulers.io()
 ) {
 
-    private var wallet: HDWallet? = null
     private var chatService: ChatService? = null
     private var messageRegister: SofaMessageRegistration? = null
     private var messageReceiver: SofaMessageReceiver? = null
@@ -67,7 +68,6 @@ class SofaMessageManager(
     private var connectivitySub: Subscription? = null
 
     fun initEverything(wallet: HDWallet): Completable {
-        this.wallet = wallet
         initChatService(wallet)
         initSenderAndReceiver(wallet)
         return initRegistrationTask()
@@ -75,7 +75,7 @@ class SofaMessageManager(
     }
 
     private fun initChatService(wallet: HDWallet) {
-        chatService = ChatService(signalServiceUrls, wallet, protocolStore, userAgent)
+        chatService = ChatService(signalServiceUrls, wallet.ownerAddress, protocolStore, userAgent)
     }
 
     private fun initSenderAndReceiver(wallet: HDWallet) {
@@ -89,7 +89,7 @@ class SofaMessageManager(
                                   conversationStore: ConversationStore,
                                   signalServiceUrls: Array<SignalServiceUrl>): SofaMessageSender {
         return messageSender ?: SofaMessageSender(
-                wallet,
+                wallet.ownerAddress,
                 protocolStore,
                 conversationStore,
                 signalServiceUrls
@@ -99,7 +99,8 @@ class SofaMessageManager(
     private fun initMessageReceiver(wallet: HDWallet, protocolStore: ProtocolStore, conversationStore: ConversationStore,
                                     signalServiceUrls: Array<SignalServiceUrl>, messageSender: SofaMessageSender): SofaMessageReceiver {
         return messageReceiver ?: SofaMessageReceiver(
-                wallet,
+                wallet.ownerAddress,
+                walletObservable,
                 protocolStore,
                 conversationStore,
                 signalServiceUrls,
@@ -213,7 +214,7 @@ class SofaMessageManager(
 
     fun resumeMessageReceiving() {
         val registeredWithServer = signalPrefs.getRegisteredWithServer()
-        if (registeredWithServer && wallet != null) messageReceiver?.receiveMessagesAsync()
+        if (registeredWithServer) messageReceiver?.receiveMessagesAsync()
     }
 
     fun tryUnregisterGcm(): Completable {

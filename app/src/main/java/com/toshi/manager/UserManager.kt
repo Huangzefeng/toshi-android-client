@@ -18,6 +18,7 @@
 package com.toshi.manager
 
 import com.toshi.crypto.HDWallet
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.manager.network.IdService
 import com.toshi.model.local.User
 import com.toshi.model.network.ServerTime
@@ -48,6 +49,7 @@ class UserManager(
         private val appPrefs: AppPrefsInterface = AppPrefs,
         private val recipientManager: RecipientManager,
         private val baseApplication: BaseApplication = BaseApplication.get(),
+        private val walletObservable: Observable<HDWallet>,
         private val scheduler: Scheduler = Schedulers.io()
 ) {
 
@@ -56,10 +58,10 @@ class UserManager(
     private val subscriptions by lazy { CompositeSubscription() }
     private val userSubject by lazy { BehaviorSubject.create<User>() }
     private var connectivitySub: Subscription? = null
-    private var wallet: HDWallet? = null
+    private var ownerAddress: String? = null
 
     fun init(wallet: HDWallet): Completable {
-        this.wallet = wallet
+        ownerAddress = wallet.ownerAddress
         attachConnectivityListener()
         return initUser()
     }
@@ -95,14 +97,14 @@ class UserManager(
     private fun userNeedsToRegister(): Boolean {
         val oldUserId = userPrefs.getOldUserId()
         val newUserId = userPrefs.getUserId()
-        val expectedAddress = wallet?.ownerAddress
+        val expectedAddress = ownerAddress
         val userId = newUserId ?: oldUserId
         return userId == null || userId != expectedAddress
     }
 
     private fun userNeedsToMigrate(): Boolean {
         val userId = userPrefs.getUserId()
-        val expectedAddress = wallet?.ownerAddress
+        val expectedAddress = ownerAddress
         return userId == null || userId != expectedAddress
     }
 
@@ -116,10 +118,10 @@ class UserManager(
     }
 
     private fun registerNewUserWithTimestamp(serverTime: ServerTime): Single<User> {
-        val wallet = wallet ?: return Single.error(IllegalStateException("Wallet is null while registerNewUserWithTimestamp"))
-        val userDetails = UserDetails(payment_address = wallet.paymentAddress)
         appPrefs.setForceUserUpdate(false)
-        return idService.api.registerUser(userDetails, serverTime.get())
+        return getWallet()
+                .map { UserDetails(payment_address = it.paymentAddress) }
+                .flatMap { idService.api.registerUser(it, serverTime.get()) }
     }
 
     private fun handleUserRegistrationFailed(throwable: Throwable): Single<User> {
@@ -225,12 +227,9 @@ class UserManager(
     }
 
     private fun getWallet(): Single<HDWallet> {
-        return Single.fromCallable {
-            while (wallet == null) Thread.sleep(100)
-            return@fromCallable wallet ?: throw IllegalStateException("Wallet is null UserManager::getWallet")
-        }
-        .subscribeOn(scheduler)
-        .timeout(20, TimeUnit.SECONDS)
+        return walletObservable
+                .getTimeoutSingle()
+                .subscribeOn(scheduler)
     }
 
     fun clear() {

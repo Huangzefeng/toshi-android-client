@@ -20,6 +20,7 @@ package com.toshi.manager.chat.tasks
 import android.os.Looper
 import com.toshi.crypto.HDWallet
 import com.toshi.crypto.signal.model.DecryptedSignalMessage
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.manager.chat.SofaMessageSender
 import com.toshi.manager.store.ConversationStore
 import com.toshi.model.local.Conversation
@@ -36,6 +37,7 @@ import com.toshi.util.logging.LogUtil
 import com.toshi.view.BaseApplication
 import org.whispersystems.signalservice.api.SignalServiceMessageReceiver
 import org.whispersystems.signalservice.api.messages.SignalServiceDataMessage
+import rx.Observable
 import rx.Single
 import rx.schedulers.Schedulers
 import java.io.IOException
@@ -45,7 +47,7 @@ import java.util.concurrent.TimeoutException
 class HandleMessageTask(
         private val messageReceiver: SignalServiceMessageReceiver,
         private val conversationStore: ConversationStore,
-        private val wallet: HDWallet,
+        private val hdWalletObservable: Observable<HDWallet>,
         private val messageSender: SofaMessageSender
 ) {
     private val taskProcessAttachments by lazy { ProcessAttachmentsTask(messageReceiver) }
@@ -117,16 +119,20 @@ class HandleMessageTask(
         // Don't render initRequests, but respond to them.
         try {
             val initRequest = SofaAdapters.get().initRequestFrom(remoteMessage.payload)
-            val initMessage = Init().construct(initRequest, wallet.paymentAddress)
+            val initMessage = Init().construct(initRequest, getWallet().paymentAddress)
             val payload = SofaAdapters.get().toJson(initMessage)
             val newSofaMessage = SofaMessage().makeNew(sender, payload)
             val recipient = Recipient(sender)
             chatManager.sendMessage(recipient, newSofaMessage)
         } catch (e: IOException) {
             LogUtil.exception("Failed to respond to incoming init request. $e")
+        } catch (e: TimeoutException) {
+            LogUtil.exception("Failed to respond to incoming init request. $e")
         }
         return null
     }
+
+    private fun getWallet() = hdWalletObservable.getTimeoutSingle().toBlocking().value()
 
     private fun fetchAndCacheIncomingPaymentSender(sender: User): Conversation? {
         // Don't render incoming SOFA::Payments, but ensure we have the sender cached.

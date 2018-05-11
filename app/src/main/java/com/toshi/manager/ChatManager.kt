@@ -37,7 +37,12 @@ class ChatManager(
         private val userManager: UserManager,
         private val recipientManager: RecipientManager,
         private val conversationStore: ConversationStore = ConversationStore(),
-        private val sofaMessageManager: SofaMessageManager = SofaMessageManager(conversationStore = conversationStore, userManager = userManager),
+        private val walletObservable: Observable<HDWallet>,
+        private val sofaMessageManager: SofaMessageManager = SofaMessageManager(
+                conversationStore = conversationStore,
+                userManager = userManager,
+                walletObservable = walletObservable
+        ),
         private val scheduler: Scheduler = Schedulers.io()
 ) {
 

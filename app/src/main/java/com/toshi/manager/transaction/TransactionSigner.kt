@@ -19,6 +19,7 @@ package com.toshi.manager.transaction
 
 import android.util.Pair
 import com.toshi.crypto.HDWallet
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.manager.model.W3PaymentTask
 import com.toshi.manager.network.EthereumServiceInterface
 import com.toshi.model.network.SentTransaction
@@ -26,13 +27,13 @@ import com.toshi.model.network.ServerTime
 import com.toshi.model.network.SignedTransaction
 import com.toshi.model.network.UnsignedTransaction
 import com.toshi.util.logging.LogUtil
+import rx.Observable
 import rx.Single
 
 class TransactionSigner(
-        private val ethereumService: EthereumServiceInterface
+        private val ethereumService: EthereumServiceInterface,
+        private val walletObservable: Observable<HDWallet>
 ) {
-
-    var wallet: HDWallet? = null
 
     fun signAndSendTransaction(unsignedTransaction: UnsignedTransaction): Single<SentTransaction> {
         return Single.zip(
@@ -46,11 +47,13 @@ class TransactionSigner(
     fun signW3Transaction(paymentTask: W3PaymentTask) = signTransaction(paymentTask.unsignedTransaction)
 
     private fun signTransaction(unsignedTransaction: UnsignedTransaction): Single<SignedTransaction> {
-        val wallet = wallet
-                ?: throw IllegalStateException("Wallet is null TransactionSigner::signTransaction")
-        return wallet.signTransaction(unsignedTransaction.transaction)
+        return getWallet()
+                .flatMap { it.signTransaction(unsignedTransaction.transaction) }
                 .flatMap { setTransactionSignature(unsignedTransaction, it) }
+                .doOnError { LogUtil.exception("Error while signing transaction TransactionSigner::signTransaction", it) }
     }
+
+    private fun getWallet() = walletObservable.getTimeoutSingle()
 
     private fun setTransactionSignature(unsignedTransaction: UnsignedTransaction, it: String?): Single<SignedTransaction> {
         return Single.fromCallable {

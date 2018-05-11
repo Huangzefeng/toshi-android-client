@@ -18,6 +18,7 @@
 package com.toshi.manager.ethRegistration
 
 import com.toshi.crypto.HDWallet
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.manager.network.EthereumServiceInterface
 import com.toshi.model.local.network.Network
 import com.toshi.model.local.network.Networks
@@ -30,23 +31,20 @@ import com.toshi.util.logging.LogUtil
 import com.toshi.util.sharedPrefs.EthGcmPrefs
 import com.toshi.util.sharedPrefs.EthGcmPrefsInterface
 import rx.Completable
+import rx.Observable
 import rx.Scheduler
+import rx.Single
 import rx.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 
 class EthGcmRegistration(
         private val networks: Networks = Networks.getInstance(),
         private val ethService: EthereumServiceInterface,
         private val gcmPrefs: EthGcmPrefsInterface = EthGcmPrefs(),
         private val gcmToken: GcmTokenInterface = GcmToken(),
+        private val walletObservable: Observable<HDWallet>,
         private val scheduler: Scheduler = Schedulers.io()
 ) {
-
-    private lateinit var wallet: HDWallet
-
-    fun init(wallet: HDWallet) {
-        this.wallet = wallet
-    }
-
     //Don't unregister the default network
     fun changeNetwork(network: Network): Completable {
         return if (networks.onDefaultNetwork()) {
@@ -75,9 +73,6 @@ class EthGcmRegistration(
     }
 
     fun forceRegisterEthGcm(): Completable {
-        if (!::wallet.isInitialized) {
-            return Completable.error(IllegalStateException("Unable to register GCM as class hasn't been initialised yet"))
-        }
         val currentNetwork = networks.currentNetwork
         gcmPrefs.setEthGcmTokenSentToServer(currentNetwork.id, false)
         changeEthBaseUrl(currentNetwork)
@@ -91,6 +86,7 @@ class EthGcmRegistration(
         else gcmToken
                 .get()
                 .flatMapCompletable { registerEthGcmToken(it) }
+                .timeout(30, TimeUnit.SECONDS)
                 .doOnError { handleGcmRegisterError(it, network) }
     }
 
@@ -111,10 +107,15 @@ class EthGcmRegistration(
     }
 
     private fun registerGcm(serverTime: Long, token: String?): Completable {
-        val addresses = wallet.getAddresses()
-        return ethService
-                .get()
-                .registerGcm(serverTime, GcmRegistration(token, addresses))
+        return getWallet()
+                .map { it.getAddresses() }
+                .flatMapCompletable { ethService.get().registerGcm(serverTime, GcmRegistration(token, it)) }
+    }
+
+    private fun getWallet(): Single<HDWallet> {
+        return walletObservable
+                .getTimeoutSingle()
+                .subscribeOn(scheduler)
     }
 
     private fun updateCurrentNetwork(network: Network) {

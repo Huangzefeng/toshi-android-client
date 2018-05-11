@@ -19,6 +19,7 @@ package com.toshi.manager
 
 import com.toshi.crypto.HDWallet
 import com.toshi.crypto.util.TypeConverter
+import com.toshi.extensions.getTimeoutSingle
 import com.toshi.manager.ethRegistration.EthGcmRegistration
 import com.toshi.manager.network.CurrencyInterface
 import com.toshi.manager.network.CurrencyService
@@ -43,6 +44,7 @@ import com.toshi.util.sharedPrefs.BalancePrefs
 import com.toshi.util.sharedPrefs.BalancePrefsInterface
 import com.toshi.view.BaseApplication
 import rx.Completable
+import rx.Observable
 import rx.Scheduler
 import rx.Single
 import rx.Subscription
@@ -50,24 +52,24 @@ import rx.schedulers.Schedulers
 import rx.subjects.BehaviorSubject
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.util.concurrent.TimeUnit
 
 class BalanceManager(
         private val ethService: EthereumServiceInterface = EthereumService,
         private val currencyService: CurrencyInterface = CurrencyService.getApi(),
         private val balancePrefs: BalancePrefsInterface = BalancePrefs(),
         private val appPrefs: AppPrefsInterface = AppPrefs,
-        private val ethGcmRegistration: EthGcmRegistration = EthGcmRegistration(ethService = ethService),
         private val baseApplication: BaseApplication = BaseApplication.get(),
+        private val walletObservable: Observable<HDWallet>,
+        private val ethGcmRegistration: EthGcmRegistration = EthGcmRegistration(
+                ethService = ethService,
+                walletObservable = walletObservable
+        ),
         private val scheduler: Scheduler = Schedulers.io()
 ) {
-    private var wallet: HDWallet? = null
     private var connectivitySub: Subscription? = null
     val balanceObservable: BehaviorSubject<Balance> = BehaviorSubject.create<Balance>()
 
-    fun init(wallet: HDWallet): Completable {
-        this.wallet = wallet
-        ethGcmRegistration.init(wallet)
+    fun init(): Completable {
         initCachedBalance()
         return registerEthGcm()
                 .onErrorComplete()
@@ -112,12 +114,6 @@ class BalanceManager(
                 )
     }
 
-    fun refreshBalanceCompletable(): Completable {
-        return getBalance()
-                .doOnSuccess { handleNewBalance(it) }
-                .toCompletable()
-    }
-
     private fun getBalance(): Single<Balance> {
         return getWallet()
                 .flatMap { ethService.get().getBalance(it.paymentAddress) }
@@ -145,6 +141,12 @@ class BalanceManager(
     fun getERC721Token(contactAddress: String): Single<ERC721TokenWrapper> {
         return getWallet()
                 .flatMap { ethService.get().getCollectible(it.paymentAddress, contactAddress) }
+                .subscribeOn(scheduler)
+    }
+
+    private fun getWallet(): Single<HDWallet> {
+        return walletObservable
+                .getTimeoutSingle()
                 .subscribeOn(scheduler)
     }
 
@@ -198,18 +200,6 @@ class BalanceManager(
 
     private fun getLocalCurrency(): Single<String> = Single.fromCallable { appPrefs.getCurrency() }
 
-    fun convertEthToLocalCurrency(ethAmount: BigDecimal): Single<BigDecimal> {
-        return getLocalCurrencyExchangeRate()
-                .flatMap { mapToLocalCurrency(it, ethAmount) }
-    }
-
-    private fun mapToLocalCurrency(exchangeRate: ExchangeRate, ethAmount: BigDecimal): Single<BigDecimal> {
-        return Single.fromCallable {
-            val marketRate = exchangeRate.rate
-            marketRate.multiply(ethAmount)
-        }
-    }
-
     fun convertLocalCurrencyToEth(localAmount: BigDecimal): Single<BigDecimal> {
         return getLocalCurrencyExchangeRate()
                 .flatMap { mapToEth(it, localAmount) }
@@ -221,7 +211,7 @@ class BalanceManager(
             if (localAmount.compareTo(BigDecimal.ZERO) == 0) BigDecimal.ZERO
             val marketRate = exchangeRate.rate
             if (marketRate.compareTo(BigDecimal.ZERO) == 0) BigDecimal.ZERO
-            localAmount.divide(marketRate, BIG_DECIMAL_SCALE, RoundingMode.HALF_DOWN)
+            return@fromCallable localAmount.divide(marketRate, BIG_DECIMAL_SCALE, RoundingMode.HALF_DOWN)
         }
     }
 
@@ -241,15 +231,6 @@ class BalanceManager(
         clearConnectivitySubscription()
         balancePrefs.clear()
         ethGcmRegistration.clear()
-    }
-
-    private fun getWallet(): Single<HDWallet> {
-        return Single.fromCallable {
-            while (wallet == null) Thread.sleep(100)
-            return@fromCallable wallet ?: throw IllegalStateException("Wallet is null UserManager::getWallet")
-        }
-        .subscribeOn(scheduler)
-        .timeout(20, TimeUnit.SECONDS)
     }
 
     private fun clearConnectivitySubscription() = connectivitySub?.unsubscribe()

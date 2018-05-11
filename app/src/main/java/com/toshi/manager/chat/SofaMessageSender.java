@@ -21,7 +21,6 @@ package com.toshi.manager.chat;
 import android.support.annotation.NonNull;
 
 import com.toshi.BuildConfig;
-import com.toshi.crypto.HDWallet;
 import com.toshi.crypto.signal.store.ProtocolStore;
 import com.toshi.manager.chat.tasks.CreateGroupTask;
 import com.toshi.manager.chat.tasks.LeaveGroupTask;
@@ -63,7 +62,6 @@ public class SofaMessageSender {
 
     private final CompositeSubscription subscriptions;
     private final ConversationStore conversationStore;
-    private final HDWallet wallet;
     private final PendingMessageStore pendingMessageStore;
     private final ProtocolStore protocolStore;
     private final PublishSubject<SofaMessageTask> messageQueue;
@@ -72,7 +70,7 @@ public class SofaMessageSender {
     private final StoreMessageTask taskStoreMessage;
 
 
-    public SofaMessageSender(@NonNull final HDWallet wallet,
+    public SofaMessageSender(@NonNull final String ownerAddress,
                              @NonNull final ProtocolStore protocolStore,
                              @NonNull final ConversationStore conversationStore,
                              @NonNull final SignalServiceUrl[] urls) {
@@ -81,12 +79,11 @@ public class SofaMessageSender {
         this.pendingMessageStore = new PendingMessageStore();
         this.protocolStore = protocolStore;
         this.subscriptions = new CompositeSubscription();
-        this.wallet = wallet;
 
         this.signalMessageSender =
                 new SignalServiceMessageSender(
                         new SignalServiceConfiguration(urls, new SignalCdnUrl[0]),
-                        this.wallet.getOwnerAddress(),
+                        ownerAddress,
                         this.protocolStore.getPassword(),
                         this.protocolStore,
                         USER_AGENT,

@@ -57,7 +57,8 @@ import rx.subscriptions.CompositeSubscription
 class TransactionManager(
         private val ethService: EthereumServiceInterface = EthereumService,
         private val pendingTransactionStore: PendingTransactionStore = PendingTransactionStore(),
-        private val transactionSigner: TransactionSigner = TransactionSigner(ethService),
+        private val walletObservable: Observable<HDWallet>,
+        private val transactionSigner: TransactionSigner = TransactionSigner(ethService, walletObservable),
         private val incomingTransactionManager: IncomingTransactionManager = IncomingTransactionManager(pendingTransactionStore),
         private val outgoingTransactionManager: OutgoingTransactionManager = OutgoingTransactionManager(pendingTransactionStore, transactionSigner),
         private val updateTransactionManager: UpdateTransactionManager = UpdateTransactionManager(pendingTransactionStore),
@@ -75,8 +76,7 @@ class TransactionManager(
     }
     private val subscriptions by lazy { CompositeSubscription() }
 
-    fun init(wallet: HDWallet): TransactionManager {
-        transactionSigner.wallet = wallet
+    fun init(): TransactionManager {
         initEverything()
         return this
     }
