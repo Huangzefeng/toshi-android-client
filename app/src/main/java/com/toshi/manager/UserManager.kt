@@ -154,7 +154,7 @@ class UserManager(
 
     private fun fetchAndUpdateUser(): Completable {
         return getWallet()
-                .flatMap { recipientManager.getUserFromPaymentAddress(it.paymentAddress) }
+                .flatMap { recipientManager.getUserFromToshiId(it.ownerAddress) }
                 .doOnSuccess { updateCurrentUser(it) }
                 .doOnError { LogUtil.exception("Error while fetching user from network $it") }
                 .toCompletable()
